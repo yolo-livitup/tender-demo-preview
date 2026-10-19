@@ -1,0 +1,1 @@
+function e(e){let t=Number(e);return Number.isFinite(t)?Math.round(t*1e4*100)/100:null}function t(e){let t=Number(e);return Number.isFinite(t)?Math.round(t/100)/100:null}export{t as n,e as t};
