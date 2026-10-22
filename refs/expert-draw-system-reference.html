@@ -1,0 +1,3713 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>评标专家抽取系统</title>
+<style>
+:root{
+  --bg:#F7F7F5; --panel:#FFFFFF; --line:#E5E4DF; --line2:#D3D1C7;
+  --text:#2C2C2A; --text2:#5F5E5A; --text3:#8A8880;
+  --blue:#185FA5; --blue-bg:#E6F1FB; --blue-dk:#0C447C;
+  --green:#3B6D11; --green-bg:#EAF3DE;
+  --amber:#854F0B; --amber-bg:#FAEEDA;
+  --red:#A32D2D; --red-bg:#FCEBEB;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:14px;line-height:1.6;}
+button,input,select,textarea{font-family:inherit;font-size:14px;color:var(--text);}
+h1,h2,h3{margin:0;font-weight:500;}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px 64px;}
+
+header{background:var(--panel);border-bottom:1px solid var(--line);}
+.hd{max-width:1180px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.hd h1{font-size:17px;}
+.hd .sub{font-size:12px;color:var(--text3);margin-top:1px;}
+.hd .spacer{flex:1;}
+
+.btn{border:1px solid var(--line2);background:var(--panel);color:var(--text);
+  padding:6px 14px;border-radius:8px;cursor:pointer;line-height:1.5;}
+.btn:hover{background:#FAFAF8;border-color:#B4B2A9;}
+.btn.pri{background:var(--blue);border-color:var(--blue);color:#fff;}
+.btn.pri:hover{background:#14508C;border-color:#14508C;}
+.btn.dgr{color:var(--red);border-color:#F09595;}
+.btn.dgr:hover{background:var(--red-bg);}
+.btn.sm{padding:3px 10px;font-size:13px;border-radius:6px;}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);background:var(--panel);}
+.tabs-in{max-width:1180px;margin:0 auto;padding:0 24px;display:flex;gap:2px;}
+.tab{padding:11px 18px;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;font-size:14px;background:none;border-top:none;border-left:none;border-right:none;}
+.tab:hover{color:var(--text);}
+.tab.on{color:var(--blue-dk);border-bottom-color:var(--blue);font-weight:500;}
+
+.pane{display:none;padding-top:22px;}
+.pane.on{display:block;}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:16px;}
+.card h3{font-size:14px;margin-bottom:4px;}
+.card .hint{font-size:12px;color:var(--text3);margin-bottom:14px;}
+.card-hd{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:4px;}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;}
+.stat .n{font-size:22px;font-weight:500;line-height:1.2;}
+.stat .l{font-size:12px;color:var(--text3);}
+
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px;}
+.toolbar .grow{flex:1;min-width:160px;}
+
+input[type=text],input[type=number],select,textarea{
+  border:1px solid var(--line2);background:var(--panel);border-radius:8px;padding:6px 10px;outline:none;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--blue);}
+textarea{width:100%;resize:vertical;line-height:1.5;}
+
+table{width:100%;border-collapse:collapse;}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:top;}
+th{color:var(--text3);font-weight:500;font-size:12px;background:#FBFBF9;}
+tbody tr:hover{background:#FAFAF8;}
+td.num{font-variant-numeric:tabular-nums;}
+
+.tag{display:inline-block;padding:1px 8px;border-radius:20px;font-size:12px;line-height:1.7;}
+.tag.g{background:var(--green-bg);color:var(--green);}
+.tag.a{background:var(--amber-bg);color:var(--amber);}
+.tag.r{background:var(--red-bg);color:var(--red);}
+.tag.b{background:var(--blue-bg);color:var(--blue-dk);}
+.tag.n{background:#F1EFE8;color:var(--text2);}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px 16px;}
+/* 评标地点 + 评标室：一次抽取只有一个评标室，占满一整行，地点更长。
+   夹在人数行与时间行之间，所以上下都留间距、不再画分隔线 */
+.grid-place{display:grid;grid-template-columns:2fr 1fr;gap:12px 16px;margin:12px 0;}
+.fld{display:flex;flex-direction:column;gap:4px;}
+.fld label{font-size:12px;color:var(--text2);}
+.fld input,.fld select,.fld textarea{width:100%;}
+.fld input.bad{border-color:var(--red);background:var(--red-bg);}
+
+.req-row{display:grid;grid-template-columns:1fr 90px 32px;gap:8px;margin-bottom:8px;align-items:center;}
+
+/* 抽取条件：四个子表 */
+.sub-sec{border:1px solid var(--line);border-radius:8px;padding:12px 14px 14px;margin-bottom:14px;background:#FCFCFA;}
+.sub-hd{display:flex;align-items:center;gap:9px;margin-bottom:10px;flex-wrap:wrap;}
+.sub-hd .no{flex:0 0 20px;width:20px;height:20px;border-radius:50%;background:var(--blue-bg);color:var(--blue-dk);
+  font-size:12px;display:inline-flex;align-items:center;justify-content:center;}
+.sub-hd b{font-weight:500;font-size:13px;}
+.sub-hd .note{font-size:12px;color:var(--text3);}
+.sub-hd .sp{flex:1;min-width:8px;}
+
+table.dt-tb th,table.dt-tb td{padding:5px 6px;vertical-align:middle;}
+table.dt-tb thead th{background:#F4F3EE;}
+table.dt-tb input,table.dt-tb select{width:100%;padding:4px 7px;font-size:13px;
+  border:1px solid var(--line2);border-radius:6px;background:#fff;outline:none;}
+table.dt-tb input:focus,table.dt-tb select:focus{border-color:var(--blue);}
+table.dt-tb input:disabled,table.dt-tb select:disabled{background:#F4F3EE;color:var(--text3);}
+table.dt-tb .idx{color:var(--text3);font-variant-numeric:tabular-nums;text-align:center;font-size:12px;}
+table.dt-tb .ops{white-space:nowrap;text-align:center;width:96px;}
+table.dt-tb .ops .btn{padding:2px 8px;font-size:12px;}
+table.dt-tb input[type=checkbox]{width:auto;}
+.tb-empty{padding:14px;text-align:center;color:var(--text3);font-size:12px;}
+.tb-ft{padding-top:8px;}
+
+/* 补抽 */
+.absent-tr.hl td{background:var(--red-bg);}
+.src-tag{display:inline-block;padding:0 6px;border-radius:20px;font-size:11px;line-height:1.7;}
+.src-tag.b{background:var(--blue-bg);color:var(--blue-dk);}
+.src-tag.n{background:#F1EFE8;color:var(--text2);}
+.src-tag.g{background:var(--green-bg);color:var(--green);}
+.rd-sum{font-size:13px;color:var(--text2);margin-top:10px;padding:9px 13px;border-radius:8px;background:var(--blue-bg);color:var(--blue-dk);}
+
+.notice{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;}
+.notice.w{background:var(--amber-bg);color:var(--amber);}
+.notice.r{background:var(--red-bg);color:var(--red);}
+.notice.i{background:var(--blue-bg);color:var(--blue-dk);}
+
+.empty{padding:36px 16px;text-align:center;color:var(--text3);font-size:13px;}
+
+.mask{position:fixed;inset:0;background:rgba(20,20,18,.38);display:none;align-items:flex-start;justify-content:center;z-index:60;padding:40px 20px;overflow:auto;}
+.mask.on{display:flex;}
+.modal{background:var(--panel);border-radius:12px;width:100%;max-width:760px;padding:22px;}
+.modal h3{font-size:15px;margin-bottom:16px;}
+.modal-ft{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;}
+
+.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.res-box{border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+.res-box .rh{padding:8px 14px;background:#FBFBF9;border-bottom:1px solid var(--line);font-size:13px;display:flex;justify-content:space-between;}
+ol.pick{list-style:none;margin:0;padding:6px 0;counter-reset:p;}
+ol.pick li{counter-increment:p;padding:6px 14px;display:flex;gap:10px;align-items:baseline;}
+ol.pick li:before{content:counter(p);flex:0 0 20px;height:20px;border-radius:50%;background:var(--blue-bg);color:var(--blue-dk);
+  font-size:12px;display:inline-flex;align-items:center;justify-content:center;}
+ol.pick li.bak:before{background:#F1EFE8;color:var(--text2);}
+ol.pick .nm{font-weight:500;}
+ol.pick .meta{color:var(--text3);font-size:12px;}
+ol.pick li .rgt{margin-left:auto;flex:0 0 auto;display:flex;gap:6px;align-items:center;}
+ol.pick li.no{opacity:.42;}
+ol.pick li.no .nm{text-decoration:line-through;}
+ol.pick li.yes{background:var(--green-bg);}
+/* 参会人数已满足需求：其余未确认的备选自动弱化，表示无需再联系 */
+ol.pick li.dim{opacity:.45;}
+ol.pick li.dim .nm{color:var(--text3);}
+/* 补抽结果用的是表格，弱显作用在行上 */
+tbody tr.dim{opacity:.45;}
+tbody tr.dim .nm{color:var(--text3);}
+ol.pick li .tel{font-family:ui-monospace,"SFMono-Regular",Consolas,monospace;font-size:12px;color:var(--text2);}
+.ab{border:1px solid var(--line2);background:#fff;color:var(--text2);font-size:12px;line-height:1.6;
+  padding:1px 10px;border-radius:20px;cursor:pointer;}
+.ab:hover{border-color:var(--text3);color:var(--text);}
+.ab.y.on{background:var(--green-bg);border-color:var(--green);color:var(--green);}
+.ab.n.on{background:var(--red-bg);border-color:var(--red);color:var(--red);}
+.at-sum{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text2);}
+.at-sum span b{font-weight:500;color:var(--text);}
+.need{border-radius:8px;padding:8px 13px;font-size:13px;margin-bottom:12px;background:var(--red-bg);color:var(--red);}
+.need.ok{background:var(--green-bg);color:var(--green);}
+.need a{cursor:pointer;text-decoration:underline;}
+.storewarn{background:var(--red-bg);border-bottom:1px solid var(--red);color:var(--red);
+  padding:10px 18px;font-size:13px;line-height:1.7;}
+.storewarn b{font-weight:600;}
+.storewarn code{background:rgba(0,0,0,.06);padding:1px 5px;border-radius:4px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;}
+
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:13px;}
+.kv dt{color:var(--text3);}
+.kv dd{margin:0;}
+
+details summary{cursor:pointer;color:var(--text2);font-size:13px;padding:6px 0;}
+details summary:hover{color:var(--text);}
+.mono{font-family:ui-monospace,"SFMono-Regular",Consolas,monospace;font-size:12px;color:var(--text2);word-break:break-all;}
+
+.reg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+.reg3 select{padding:6px 6px;}
+.dt{display:grid;grid-template-columns:1fr 96px;gap:6px;}
+.dt select{padding:6px 4px;}
+.chk{margin-top:14px;padding:9px 13px;border-radius:8px;font-size:13px;}
+.chk.ok{background:var(--green-bg);color:var(--green);}
+.chk.bad{background:var(--red-bg);color:var(--red);}
+.chk ul{margin:5px 0 0;padding-left:18px;}
+
+#printArea{display:none;}
+@media print{
+  body{background:#fff;}
+  #app{display:none !important;}
+  #printArea{display:block !important;padding:0;font-size:12px;color:#000;}
+  #printArea h2{font-size:16px;margin-bottom:4px;}
+  #printArea table{font-size:11px;}
+  #printArea th,#printArea td{border:1px solid #999;padding:4px 6px;}
+  #printArea .sec{margin-bottom:16px;page-break-inside:avoid;}
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+<header>
+  <div class="hd">
+    <div>
+      <h1>评标专家抽取系统</h1>
+      <div class="sub"><b id="hdOrg">深圳金泽数智技术有限公司</b> · 企业自主招标 / 内部评审 · 本机运行 · 数据不出本地</div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn sm" onclick="exportBackup()">备份数据</button>
+    <button class="btn sm" onclick="document.getElementById('bkFile').click()">恢复备份</button>
+    <input type="file" id="bkFile" accept=".json" style="display:none" onchange="importBackup(this)">
+  </div>
+</header>
+<div id="storeWarn"></div>
+
+<div class="tabs"><div class="tabs-in">
+  <button class="tab on" data-p="experts" onclick="go('experts')">专家库</button>
+  <button class="tab" data-p="draw" onclick="go('draw')">专家抽取</button>
+  <button class="tab" data-p="redraw" onclick="go('redraw')">专家补抽</button>
+  <button class="tab" data-p="records" onclick="go('records')">抽取记录</button>
+</div></div>
+
+<div class="wrap">
+
+  <!-- ============ 专家库 ============ -->
+  <section class="pane on" id="p-experts">
+    <div class="stats">
+      <div class="stat"><div class="n" id="s1">0</div><div class="l">专家总数</div></div>
+      <div class="stat"><div class="n" id="s2">0</div><div class="l">在库可用</div></div>
+      <div class="stat"><div class="n" id="s3">0</div><div class="l">专业方向</div></div>
+      <div class="stat"><div class="n" id="s4">0</div><div class="l">所属单位</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd"><h3>专家名录</h3><div class="spacer" style="flex:1"></div></div>
+      <div class="toolbar">
+        <button class="btn pri sm" onclick="openExpert()">+ 新增专家</button>
+        <button class="btn sm" onclick="document.getElementById('csvFile').click()">导入 CSV</button>
+        <input type="file" id="csvFile" accept=".csv" style="display:none" onchange="importCSV(this)">
+        <button class="btn sm" onclick="downloadTemplate()">下载模板</button>
+        <button class="btn sm" onclick="exportCSV()">导出 CSV</button>
+        <button class="btn sm" onclick="loadDemo()">载入示例数据</button>
+        <span id="selBar" style="display:none;align-items:center;gap:8px">
+          <span id="selCnt" style="font-size:12px;color:var(--text2)">已选 0 人</span>
+          <button class="btn sm dgr" onclick="delSelectedExperts()">删除选中</button>
+          <button class="btn sm" onclick="clearExpertSel()">取消选择</button>
+        </span>
+        <div class="grow"></div>
+        <input type="text" id="q" placeholder="搜索编号 / 姓名 / 单位 / 专业" oninput="renderExperts()" style="min-width:220px">
+        <select id="qStatus" onchange="renderExperts()">
+          <option value="">全部状态</option><option>在库</option><option>暂停</option><option>停用</option>
+        </select>
+      </div>
+      <div id="expertTable"></div>
+    </div>
+  </section>
+
+  <!-- ============ 抽取 ============ -->
+  <section class="pane" id="p-draw">
+    <div class="card">
+      <h3>项目信息</h3>
+      <div class="hint">用于抽取记录归档，请如实填写。带 <span style="color:var(--red)">*</span> 为必填。</div>
+      <div class="grid3">
+        <div class="fld"><label>项目编号 *</label><input type="text" id="pCode" placeholder="如：ZB-2026-018"></div>
+        <div class="fld"><label>项目名称 *</label><input type="text" id="pName" placeholder="如：XX系统升级采购项目"></div>
+        <div class="fld"><label>组织形式</label><select id="pForm">
+          <option value="">请选择</option><option>自行招标</option><option>委托招标</option></select></div>
+        <div class="fld"><label>招标方式</label><select id="pMethod">
+          <option value="">请选择</option><option>公开招标</option><option>邀请招标</option>
+          <option>竞争性谈判</option><option>竞争性磋商</option><option>询价</option>
+          <option>单一来源采购</option><option>框架协议</option><option>其他</option></select></div>
+        <div class="fld"><label>招标人机构</label><input type="text" id="pOwner" placeholder="招标人 / 采购人全称"></div>
+        <div class="fld"><label>行业</label><select id="pIndustry"><option value="">请选择</option>
+          <option>房屋建筑</option><option>市政公用</option><option>交通运输</option><option>水利水电</option>
+          <option>电力工程</option><option>通信工程</option><option>机电设备</option><option>信息技术</option>
+          <option>医疗卫生</option><option>教育装备</option><option>农林牧渔</option><option>能源化工</option>
+          <option>环境保护</option><option>文化旅游</option><option>金融服务</option><option>政府采购</option>
+          <option>其他</option></select></div>
+        <div class="fld"><label>联系人</label><input type="text" id="pContact"></div>
+        <div class="fld"><label>联系电话</label><input type="text" id="pContactTel" inputmode="numeric" maxlength="11" placeholder="11 位手机号" oninput="telOnly(this)" onblur="chkTel(this,0)"></div>
+        <div class="fld"><label>行政区域</label>
+          <div class="reg3">
+            <select id="regP" onchange="fillCity()"><option value="">省/自治区/直辖市</option></select>
+            <select id="regC" onchange="fillDist()"><option value="">市/地区</option></select>
+            <select id="regD" onchange="saveRegion()"><option value="">区/县</option></select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>抽取信息</h3>
+      <div class="hint">评标委员会构成按《招标投标法》第三十七条自动校验：成员须 5 人以上单数，专家不得少于成员总数的三分之二。带 <span style="color:var(--red)">*</span> 为必填。</div>
+      <div class="grid3">
+        <div class="fld"><label>所属机构</label><input type="text" id="dOrg" placeholder="招标代理机构全称"></div>
+        <!-- 所属机构默认取使用单位（见 ORG_NAME），可改 -->
+        <div class="fld"><label>抽取人姓名 *</label><input type="text" id="dUser"></div>
+        <div class="fld"><label>抽取人手机号码 *</label><input type="text" id="dUserTel" inputmode="numeric" maxlength="11" placeholder="11 位手机号" oninput="telOnly(this)" onblur="chkTel(this,1)"></div>
+        <div class="fld"><label>监督人姓名</label><input type="text" id="dSup"></div>
+        <div class="fld"><label>监督人联系电话</label><input type="text" id="dSupTel" inputmode="numeric" maxlength="11" placeholder="11 位手机号" oninput="telOnly(this)" onblur="chkTel(this,0)"></div>
+        <div class="fld"><label>评标类别</label><select id="dCategory"><option value="">请选择</option>
+          <option>技术标评审</option><option>商务标评审</option><option>综合评审</option>
+          <option>资格预审</option><option>项目论证</option><option>履约验收</option><option>其他</option></select></div>
+        <div class="fld"><label>评标委员人数 *</label>
+          <input type="number" id="dTotal" min="1" step="1" value="5" oninput="calcCommittee('total')"></div>
+        <div class="fld"><label>招标人代表人数</label>
+          <input type="number" id="dOwnerRep" min="0" step="1" value="0" oninput="calcCommittee('owner')"></div>
+        <div class="fld"><label>抽取专家人数 *</label>
+          <input type="number" id="dExpertNum" min="1" step="1" value="5" oninput="calcCommittee('expert')"></div>
+      </div>
+      <!-- 一次抽取只有一个评标室：地点与评标室占满一整行，夹在人数与时间两行之间 -->
+      <div class="grid-place">
+        <div class="fld"><label>评标地点</label><input type="text" id="dPlace" placeholder="如：深圳市福田区XX大厦 3 楼"></div>
+        <div class="fld"><label>评标室</label><input type="text" id="dRoom" placeholder="如：第一评标室"></div>
+      </div>
+      <div class="grid3">
+        <div class="fld"><label>评标开始时间</label>
+          <div class="dt"><input type="date" id="dStartD" onchange="saveRegion()"><select id="dStartT" onchange="saveRegion()"></select></div></div>
+        <div class="fld"><label>专家报到时间</label>
+          <div class="dt"><input type="date" id="dCheckinD"><select id="dCheckinT"></select></div></div>
+        <div class="fld"><label>评标时长</label><select id="dDuration"></select></div>
+      </div>
+      <div style="margin-top:10px"><button class="btn sm" onclick="deriveTimes()">按评标开始时间自动推算报到时间</button>
+        <span style="font-size:12px;color:var(--text3);margin-left:8px">报到 = 开始前 30 分钟</span></div>
+      <div id="cmteHint"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd"><h3>抽取条件</h3><div style="flex:1"></div>
+        <span class="tag n" id="composeSum">组成合计 0 人</span></div>
+      <div class="hint">依次填写四个部分。回避单位按「单位名称」比对专家的<b>所在单位</b>（统一社会信用代码仅作归档留痕）；回避专家按「姓名」或「回避专家证件号码」比对专家库中的姓名与身份证号，任一命中即排除。所有条目均会写进抽取记录。</div>
+
+      <!-- 一、抽取专家组成 -->
+      <div class="sub-sec">
+        <div class="sub-hd"><span class="no">1</span><b>抽取专家组成</b>
+          <span class="note">按专业分行，每行独立抽取，同一专家不会跨行重复</span></div>
+        <table class="dt-tb">
+          <thead><tr>
+            <th style="width:44px">序号</th>
+            <th>评标专业</th>
+            <th>临评专业</th>
+            <th style="width:118px">行业</th>
+            <th style="width:66px">人数</th>
+            <th style="width:104px">抽取状态</th>
+            <th style="width:68px">操作</th>
+          </tr></thead>
+          <tbody id="bdCompose"></tbody>
+        </table>
+        <div class="tb-empty" id="emCompose">暂无数据，点击表格下方「+ 新增行」添加。</div>
+        <div class="tb-ft"><button class="btn sm" onclick="addRow('compose')">+ 新增行</button></div>
+      </div>
+
+      <!-- 二、特邀专家 -->
+      <div class="sub-sec">
+        <div class="sub-hd"><span class="no">2</span><b>特邀专家</b>
+          <span class="note">甲方指定或特殊专业直接邀请的专家，不参与随机抽取，计入评标委员会专家人数</span></div>
+        <table class="dt-tb">
+          <thead><tr>
+            <th style="width:44px">序号</th>
+            <th style="width:110px">姓名</th>
+            <th style="width:150px">专业</th>
+            <th style="width:130px">手机号</th>
+            <th style="width:180px">身份证</th>
+            <th>备注</th>
+            <th style="width:68px">操作</th>
+          </tr></thead>
+          <tbody id="bdInvited"></tbody>
+        </table>
+        <div class="tb-empty" id="emInvited">暂无特邀专家。</div>
+        <div class="tb-ft"><button class="btn sm" onclick="addRow('invited')">+ 新增行</button></div>
+      </div>
+
+      <!-- 三、回避单位信息 -->
+      <div class="sub-sec">
+        <div class="sub-hd"><span class="no">3</span><b>回避单位信息</b>
+          <span class="note">填投标人全称，命中专家「所在单位」即排除并记入排除明细</span></div>
+        <table class="dt-tb">
+          <thead><tr>
+            <th style="width:44px">序号</th>
+            <th>单位名称</th>
+            <th style="width:230px">统一社会信用代码</th>
+            <th>回避原因</th>
+            <th style="width:68px">操作</th>
+          </tr></thead>
+          <tbody id="bdOrg"></tbody>
+        </table>
+        <div class="tb-empty" id="emOrg">暂无回避单位。</div>
+        <div class="tb-ft"><button class="btn sm" onclick="addRow('org')">+ 新增行</button></div>
+      </div>
+
+      <!-- 四、回避专家信息 -->
+      <div class="sub-sec">
+        <div class="sub-hd"><span class="no">4</span><b>回避专家信息</b>
+          <span class="note">与本项目存在利害关系的专家，按姓名或证件号码回避</span></div>
+        <table class="dt-tb">
+          <thead><tr>
+            <th style="width:44px">序号</th>
+            <th style="width:180px">回避专家姓名</th>
+            <th style="width:230px">回避专家证件号码</th>
+            <th>回避原因</th>
+            <th style="width:68px">操作</th>
+          </tr></thead>
+          <tbody id="bdExpert"></tbody>
+        </table>
+        <div class="tb-empty" id="emExpert">暂无回避专家。</div>
+        <div class="tb-ft"><button class="btn sm" onclick="addRow('expert')">+ 新增行</button></div>
+      </div>
+
+      <!-- 其他设置 -->
+      <div class="sub-sec">
+        <div class="sub-hd"><span class="no">5</span><b>其他抽取设置</b></div>
+        <div class="grid2">
+          <div class="fld">
+            <label>同一单位最多抽取</label>
+            <input type="number" id="sameOrg" min="0" value="1" oninput="syncChecks()">
+            <span style="font-size:12px;color:var(--text3)">填 0 表示不限制。默认 1 人。</span>
+          </div>
+          <div class="fld">
+            <label>近 N 天内已被抽为正选的次数上限</label>
+            <input type="number" id="recentLimit" min="0" value="0" oninput="syncChecks()">
+            <span style="font-size:12px;color:var(--text3)">填 0 表示不限制。需配合抽取记录使用。</span>
+          </div>
+          <div class="fld">
+            <label>备选人数</label>
+            <select id="backupRatio">
+              <option value="1">按 1:1 抽取备选</option>
+              <option value="2" selected>按 1:2 抽取备选</option>
+              <option value="3">按 1:3 抽取备选</option>
+              <option value="0">不抽备选</option>
+            </select>
+            <span style="font-size:12px;color:var(--text3)">备选按序递补，有人缺席时依次替补，不重新抽。</span>
+          </div>
+          <div class="fld">
+            <label>职称门槛</label>
+            <select id="titleMin">
+              <option value="">不限</option>
+              <option value="副高级">副高级及以上</option>
+              <option value="正高级">正高级</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn" onclick="previewPool()">预览候选池</button>
+        <button class="btn pri" onclick="runDraw()">执行抽取</button>
+        <button class="btn" onclick="clearCond()">清空条件</button>
+        <span id="poolInfo" style="font-size:13px;color:var(--text3)"></span>
+        <div style="flex:1"></div>
+        <span id="formTip" style="font-size:12px;color:var(--text3)"></span>
+        <button class="btn sm" onclick="clearForm()" title="清除本工具记住的表单内容">清除填写记忆</button>
+      </div>
+      <div id="drawMsg" style="margin-top:12px"></div>
+    </div>
+
+    <div id="resultBox"></div>
+  </section>
+
+  <!-- ============ 专家补抽 ============ -->
+  <section class="pane" id="p-redraw">
+    <div class="card">
+      <div class="card-hd"><h3>补抽来源</h3><div style="flex:1"></div>
+        <select id="rdSrc" onchange="loadRedrawSrc()" style="min-width:340px;max-width:100%">
+          <option value="">请选择原抽取记录</option>
+        </select></div>
+      <div class="hint">适用于已抽取专家因请假、回避、放弃等原因无法出席的情形。默认优先从原记录的备选名单按序递补；备选不足时，可选择从专家库重新随机抽取（沿用原记录的回避规则与抽取条件）。补抽全程留痕，独立于原记录存档。</div>
+      <div id="rdSrcInfo"></div>
+    </div>
+
+    <div class="card" id="rdPanel" style="display:none">
+      <div class="card-hd"><h3>标记缺席专家</h3><div style="flex:1"></div>
+        <span class="tag n" id="rdAbsSum">未标记缺席</span></div>
+      <div class="hint">勾选无法出席的专家并填写缺席原因，系统按专业组计算补抽人数。备选人员同样可标记缺席。</div>
+      <div id="rdList"></div>
+    </div>
+
+    <div class="card" id="rdOpt" style="display:none">
+      <div class="card-hd"><h3>补抽设置</h3></div>
+      <div class="grid3">
+        <div class="fld"><label>补抽人姓名 *</label><input type="text" id="rdUser" placeholder="姓名"></div>
+        <div class="fld"><label>监督人姓名</label><input type="text" id="rdSup" placeholder="可选"></div>
+        <div class="fld"><label>补抽方式</label><select id="rdMode" onchange="syncAbsent()">
+          <option value="1">优先备选递补，不足时从专家库重抽</option>
+          <option value="0">仅从备选递补（不足则记为缺额）</option></select></div>
+      </div>
+      <label style="display:flex;gap:7px;align-items:flex-start;font-size:13px;margin-top:12px;line-height:1.5">
+        <input type="checkbox" id="rdExtra" style="margin-top:4px">
+        <span>追加使用「专家抽取」页当前填写的<strong>回避单位</strong>与<strong>回避专家</strong>（适用于补抽前新增了投标人的情形）</span>
+      </label>
+      <div id="rdCondEcho" style="margin-top:10px"></div>
+      <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn" onclick="previewRedraw()">预览可补抽人选</button>
+        <button class="btn pri" onclick="runRedraw()">执行补抽</button>
+        <span id="rdInfo" style="font-size:13px;color:var(--text3)"></span>
+      </div>
+      <div id="rdMsg" style="margin-top:12px"></div>
+    </div>
+
+    <div id="rdResult"></div>
+
+    <div class="card">
+      <div class="card-hd"><h3>补抽记录</h3><div style="flex:1"></div>
+        <button class="btn sm" onclick="renderRedrawRecords()">刷新</button></div>
+      <div class="hint">每次补抽独立存档：缺席明细、递补 / 重抽来源、替换关系、候选池快照与随机方式，可导出归档。</div>
+      <div id="rdRecTable"></div>
+    </div>
+  </section>
+
+  <!-- ============ 记录 ============ -->
+  <section class="pane" id="p-records">
+    <div class="card">
+      <div class="card-hd"><h3>抽取记录</h3><div style="flex:1"></div>
+        <button class="btn sm" onclick="renderRecords()">刷新</button>
+      </div>
+      <div class="hint">每次成功抽取都会自动留痕：抽取时间、条件参数、候选池快照、排除明细与结果，可导出归档。</div>
+      <div id="recTable"></div>
+    </div>
+  </section>
+
+</div>
+</div>
+
+<datalist id="dlMajors"></datalist>
+<datalist id="dlNames"></datalist>
+
+<div id="printArea"></div>
+
+<!-- 专家编辑弹窗 -->
+<div class="mask" id="mExpert">
+  <div class="modal">
+    <h3 id="meTitle">新增专家</h3>
+    <div class="grid3">
+      <div class="fld"><label>姓名 *</label><input type="text" id="f_name"></div>
+      <div class="fld"><label>身份证</label><input type="text" id="f_idNo" maxlength="18" placeholder="18 位，用于回避专家精准比对"></div>
+      <div class="fld"><label>状态</label><select id="f_status"><option>在库</option><option>暂停</option><option>停用</option></select></div>
+      <div class="fld"><label>工作单位 *</label><input type="text" id="f_org"></div>
+      <div class="fld"><label>职称</label><select id="f_title"><option>正高级</option><option selected>副高级</option><option>中级</option><option>其他</option></select></div>
+      <div class="fld"><label>专业类别 *</label><input type="text" id="f_major2" placeholder="如：建筑工程"></div>
+      <div class="fld"><label>联系电话</label><input type="text" id="f_phone"></div>
+      <div class="fld"><label>入库时间</label><input type="text" id="f_joinDate" placeholder="YYYY-MM-DD"></div>
+      <div class="fld"><label>备注</label><input type="text" id="f_remark"></div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeM('mExpert')">取消</button>
+      <button class="btn pri" onclick="saveExpert()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 记录详情弹窗 -->
+<div class="mask" id="mRec">
+  <div class="modal" id="mRecBody" style="max-width:860px"></div>
+</div>
+
+<!-- 补抽详情弹窗 -->
+<div class="mask" id="mRd">
+  <div class="modal" id="mRdBody" style="max-width:860px"></div>
+</div>
+
+<script>
+/* ================= 数据层 ================= */
+var K_E = 'extdraw.experts.v1';
+var K_R = 'extdraw.records.v1';
+
+/* 使用单位（页头 / 抽取界面 / 抽取成果与打印记录统一取这里，改一处即可） */
+var ORG_NAME = '深圳金泽数智技术有限公司';
+
+var TITLES = ['正高级','副高级','中级','其他'];
+var FIELDS = [
+  {k:'id',       label:'专家编号', core:1},
+  {k:'name',     label:'姓名', core:1},
+  {k:'idNo',     label:'身份证号'},
+  {k:'org',      label:'所在单位', core:1},
+  {k:'title',    label:'职称'},
+  {k:'cert',     label:'执业资格'},
+  {k:'major1',   label:'一级专业', core:1},
+  {k:'major2',   label:'二级专业'},
+  {k:'city',     label:'所在地'},
+  {k:'phone',    label:'手机号'},
+  {k:'email',    label:'邮箱'},
+  {k:'joinDate', label:'入库日期'},
+  {k:'status',   label:'状态'},
+  {k:'remark',   label:'备注'}
+];
+
+/* 下载模板用的精简列（2026-10-15 用户定：10 列）
+   - 序号只是填表行号，导入时忽略（k:null）
+   - 「专业类别」写入二级专业 major2 —— 抽取按二级专业匹配候选池
+   - 执业资格 / 所在地 / 邮箱 / 专家编号不再出现在模板里（编号导入时自动生成）
+   导入时旧的 14 列表头（所在单位 / 手机号 / 身份证号 / 入库日期 …）仍然认，见 fieldByLabel */
+var TPL_COLS = [
+  {label:'序号',     k:null},
+  {label:'姓名',     k:'name'},
+  {label:'专业类别', k:'major2'},
+  {label:'职称',     k:'title'},
+  {label:'工作单位', k:'org'},
+  {label:'身份证',   k:'idNo'},
+  {label:'联系电话', k:'phone'},
+  {label:'入库时间', k:'joinDate'},
+  {label:'状态',     k:'status'},
+  {label:'备注',     k:'remark'}
+];
+/* 「新增 / 编辑专家」表单只保留这 9 项（模板 10 列去掉「序号」），
+   执业资格 / 一级专业 / 所在地 / 邮箱 不再出现在表单里，但数据仍保留、仍参与抽取 */
+var FORM_FIELDS = TPL_COLS.filter(function(c){ return c.k; });
+/* 表头 → 字段：先认精简模板列名，再回落旧的 14 列正式列名 */
+function fieldByLabel(h){
+  var t = String(h==null?'':h).trim();
+  var tpl = TPL_COLS.filter(function(c){ return c.label===t; })[0];
+  if(tpl) return tpl.k ? FIELDS.filter(function(f){ return f.k===tpl.k; })[0] : null;
+  return FIELDS.filter(function(f){ return f.label===t; })[0] || null;
+}
+
+/* 浏览器存储可用性：Firefox / Safari 在 file:// 下会禁用或隔离 localStorage，
+   若不探测，数据会「看似存了、关掉就没」，必须启动时明确告警。 */
+var STORE_OK = null;
+function storeProbe(){
+  if(STORE_OK !== null) return STORE_OK;
+  try{
+    var t = '__extdraw_probe__';
+    localStorage.setItem(t, '1');
+    var okv = localStorage.getItem(t) === '1';
+    localStorage.removeItem(t);
+    STORE_OK = okv;
+  }catch(e){ STORE_OK = false; }
+  return STORE_OK;
+}
+function isFileProto(){ return String(location.protocol||'').indexOf('file') === 0; }
+function browserName(){
+  var ua = navigator.userAgent || '';
+  if(/Edg\//.test(ua)) return 'Edge';
+  if(/OPR\/|Opera/.test(ua)) return 'Opera';
+  if(/Firefox\/|FxiOS/.test(ua)) return 'Firefox';
+  if(/Chrome\//.test(ua)) return 'Chrome';
+  if(/Safari\//.test(ua)) return 'Safari';
+  return '当前浏览器';
+}
+function showStoreWarn(){
+  var box = document.getElementById('storeWarn');
+  if(!box) return;
+  if(storeProbe()){ box.innerHTML = ''; return; }
+  var bn = browserName(), fix;
+  if(!isFileProto()){
+    fix = '本页运行在 ' + (location.protocol||'') + ' 下，浏览器拒绝写入本地存储。'
+        + '通常是<b>无痕 / 隐私模式</b>或站点数据权限被禁用，换普通窗口打开即可。';
+  } else if(bn === 'Firefox'){
+    fix = 'Firefox 默认禁止本地网页（<code>file://</code>）写入存储。改用 <b>Edge 或 Chrome</b> 打开本文件即可正常保存；'
+        + '或在 <code>about:config</code> 里把 <code>privacy.file_unique_origin</code> 改为 <code>false</code>（不推荐，会放宽安全策略）。';
+  } else if(bn === 'Safari'){
+    fix = 'Safari 会阻止本地网页（<code>file://</code>）写入存储。请改用 <b>Chrome 或 Edge</b> 打开本文件。';
+  } else {
+    fix = '请换用 <b>Edge 或 Chrome</b> 打开本文件；若已在使用，检查是否开启了无痕模式或禁止了本地数据存储。';
+  }
+  box.innerHTML = '<div class="storewarn">'
+    + '<b>⚠ 当前环境无法保存数据</b>：' + fix
+    + '<br>现在录入的专家库和抽取记录<b>关掉页面就会丢失</b>，请不要在此环境下录入真实数据。'
+    + '已保存的数据不受影响，可随时用右上角「备份数据」导出到别处。'
+    + '</div>';
+}
+
+function load(k){ try{ var v = localStorage.getItem(k); return v ? JSON.parse(v) : []; }catch(e){ return []; } }
+function save(k,v){
+  try{
+    localStorage.setItem(k, JSON.stringify(v));
+    return true;
+  }catch(e){
+    STORE_OK = false;
+    var quota = e && (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014);
+    alert(quota
+      ? '保存失败：浏览器本地存储空间已满，请删掉一些历史抽取记录后重试。'
+      : '保存失败：当前环境不允许写入本地存储（' + browserName() + ' 的本地文件模式可能禁用了存储）。\n\n'
+        + '请改用 Edge 或 Chrome 打开本文件，否则数据不会保留。\n'
+        + '如需保留当前数据，请先导出 CSV 或备份文件。');
+    showStoreWarn();
+    return false;
+  }
+}
+function experts(){ return load(K_E); }
+function setExperts(a){ save(K_E,a); }
+function records(){ return load(K_R); }
+function setRecords(a){ save(K_R,a); }
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+/* 无偏随机整数 [0,n) */
+function randBelow(n){
+  if(n<=1) return 0;
+  var MAX = 4294967296;
+  var limit = MAX - (MAX % n);
+  var buf = new Uint32Array(1);
+  var v;
+  do { crypto.getRandomValues(buf); v = buf[0]; } while (v >= limit);
+  return v % n;
+}
+/* Fisher-Yates 洗牌，使用系统级随机源 */
+function shuffle(arr){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = randBelow(i+1);
+    var t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+
+function newId(){
+  var all = experts(), max = 0;
+  all.forEach(function(e){ var n = parseInt(String(e.id||'').replace(/\D/g,''),10); if(n>max) max=n; });
+  return 'EX' + String(max+1).padStart(4,'0');
+}
+function maskPhone(p){
+  p = String(p||'').trim();
+  return p.length>=7 ? p.slice(0,3)+'****'+p.slice(-4) : p;
+}
+function maskIdNo(v){
+  v = String(v||'').trim();
+  return v.length>=10 ? v.slice(0,6)+'********'+v.slice(-4) : v;
+}
+/* 手机号：录入时只留数字并截断 11 位 */
+function telOnly(el){
+  var v = String(el.value==null?'':el.value).replace(/\D/g,'').slice(0,11);
+  if(v !== el.value) el.value = v;
+  if(v.length === 11 && isTel11(v)){
+    if(el.classList) el.classList.remove('bad');
+  }
+}
+function isTel11(v){ return /^1[3-9]\d{9}$/.test(String(v||'').trim()); }
+/* 失焦 / 提交时校验；required=1 时不允许为空 */
+function chkTel(el, required){
+  if(!el) return true;
+  var v = String(el.value==null?'':el.value).replace(/\D/g,'').slice(0,11);
+  el.value = v;
+  if(!v){
+    if(el.classList){ if(required) el.classList.add('bad'); else el.classList.remove('bad'); }
+    return !required;
+  }
+  var ok = isTel11(v);
+  if(el.classList){ if(ok) el.classList.remove('bad'); else el.classList.add('bad'); }
+  return ok;
+}
+var TEL_FIELDS = [['pContactTel','项目联系人电话',0],['dUserTel','抽取人手机号码',1],['dSupTel','监督人联系电话',0]];
+function checkAllTel(){
+  var bad = [];
+  TEL_FIELDS.forEach(function(x){
+    var el = document.getElementById(x[0]);
+    if(el && !chkTel(el, x[2])) bad.push(x[1] + (el.value ? '（'+el.value+'）' : '（未填写）'));
+  });
+  return bad;
+}
+function todayStr(){
+  var d=new Date(), p=function(n){return String(n).padStart(2,'0');};
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());
+}
+function nowStr(){
+  var d=new Date(), p=function(n){return String(n).padStart(2,'0');};
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());
+}
+/* 简单字符串哈希，用于候选池快照留痕 */
+function hashStr(s){
+  var h = 5381;
+  for(var i=0;i<s.length;i++){ h = ((h<<5)+h+s.charCodeAt(i))>>>0; }
+  return h.toString(16).padStart(8,'0');
+}
+
+/* ================= 导航 ================= */
+function go(p){
+  var tabs = document.querySelectorAll('.tab');
+  for(var i=0;i<tabs.length;i++){ tabs[i].classList.toggle('on', tabs[i].getAttribute('data-p')===p); }
+  var ps = document.querySelectorAll('.pane');
+  for(var j=0;j<ps.length;j++){ ps[j].classList.toggle('on', ps[j].id==='p-'+p); }
+  if(p==='records') renderRecords();
+  if(p==='draw'){ refreshDatalist(); }
+  if(p==='redraw'){ refreshRedrawSrc(); renderRedrawRecords(); }
+}
+
+/* ================= 专家库 ================= */
+function openExpert(id){
+  var e = id ? experts().filter(function(x){return x.id===id;})[0] : null;
+  document.getElementById('meTitle').textContent = e ? '编辑专家' : '新增专家';
+  FORM_FIELDS.forEach(function(f){
+    var el = document.getElementById('f_'+f.k);
+    if(el) el.value = e ? (e[f.k]||'') : (f.k==='joinDate' ? todayStr() : '');
+  });
+  if(!e) document.getElementById('f_status').value = '在库';
+  document.getElementById('mExpert').classList.add('on');
+  document.getElementById('mExpert').setAttribute('data-edit', id||'');
+}
+function closeM(mid){ document.getElementById(mid).classList.remove('on'); }
+
+function saveExpert(){
+  var editId = document.getElementById('mExpert').getAttribute('data-edit');
+  var o = {};
+  FORM_FIELDS.forEach(function(f){
+    var el = document.getElementById('f_'+f.k);
+    if(el) o[f.k] = el.value.trim();
+  });
+  if(!o.name){ alert('请填写姓名'); return; }
+  if(!o.org){ alert('请填写工作单位'); return; }
+  if(!o.major2){ alert('请填写专业类别'); return; }
+
+  var all = experts();
+  if(editId){
+    for(var i=0;i<all.length;i++){
+      if(all[i].id===editId){
+        /* 表单已精简：执业资格 / 一级专业 / 所在地 / 邮箱 没有输入框，
+           编辑时要用旧值补齐，否则保存一次就把这些字段清空了 */
+        var merged = {}, kk;
+        for(kk in all[i]) merged[kk] = all[i][kk];
+        for(kk in o) if(o[kk] !== undefined) merged[kk] = o[kk];
+        merged.id = editId;
+        all[i] = merged;
+        break;
+      }
+    }
+  } else {
+    o.id = newId();
+    all.push(o);
+  }
+  setExperts(all);
+  closeM('mExpert');
+  renderExperts();
+  refreshDatalist();
+}
+
+function delExpert(id){
+  var all = experts();
+  var e = all.filter(function(x){return x.id===id;})[0];
+  if(!e) return;
+  if(!confirm('确认删除专家「'+e.name+'」？此操作不可撤销。')) return;
+  setExperts(all.filter(function(x){return x.id!==id;}));
+  renderExperts();
+}
+
+/* 专家名录多选：EX_SEL 是唯一事实来源（id → 1），
+   勾选状态存在这里而不是 DOM，搜索 / 筛选重渲染后选中不会丢 */
+var EX_SEL = {};
+
+function renderExperts(){
+  var all = experts();
+  var q = (document.getElementById('q').value||'').trim().toLowerCase();
+  var st = document.getElementById('qStatus').value;
+
+  var list = all.filter(function(e){
+    if(st && (e.status||'在库')!==st) return false;
+    if(!q) return true;
+    return [e.id,e.name,e.org,e.major1,e.major2,e.city,e.title,e.cert]
+      .join(' ').toLowerCase().indexOf(q)>=0;
+  });
+
+  document.getElementById('s1').textContent = all.length;
+  document.getElementById('s2').textContent = all.filter(function(e){return (e.status||'在库')==='在库';}).length;
+  var majors = {};
+  all.forEach(function(e){ if(e.major1) majors[e.major1]=1; if(e.major2) majors[e.major2]=1; });
+  document.getElementById('s3').textContent = Object.keys(majors).length;
+  var orgs = {};
+  all.forEach(function(e){ if(e.org) orgs[e.org]=1; });
+  document.getElementById('s4').textContent = Object.keys(orgs).length;
+
+  if(!list.length){
+    document.getElementById('expertTable').innerHTML =
+      '<div class="empty">'+(all.length?'没有符合条件的专家':'专家库还是空的。点「新增专家」录入，或「下载模板」批量填写后导入。')+'</div>';
+    /* 没有行可勾时收起操作条（EX_SEL 保留，清掉筛选后选中会回来） */
+    var bar0 = document.getElementById('selBar');
+    if(bar0) bar0.style.display = 'none';
+    return;
+  }
+
+  var h = '<table><thead><tr><th style="width:34px"><input type="checkbox" id="ckAll" '
+        + 'onchange="toggleAllExperts(this)" title="全选 / 取消全选（仅当前筛选结果）"></th>'
+        + '<th style="width:70px">编号</th><th style="width:96px">姓名</th><th>所在单位</th>'
+        + '<th style="width:150px">专业</th><th style="width:78px">职称</th><th style="width:110px">联系方式</th>'
+        + '<th style="width:60px">状态</th><th style="width:96px">操作</th></tr></thead><tbody>';
+  list.forEach(function(e){
+    var s = e.status||'在库';
+    var cls = s==='在库'?'g':(s==='暂停'?'a':'r');
+    h += '<tr'+(EX_SEL[e.id]?' style="background:#F2F7FD"':'')+'>'
+      + '<td><input type="checkbox" class="ckE" data-id="'+esc(e.id)+'"'
+        + (EX_SEL[e.id]?' checked':'')+' onchange="onExpertCheck(this)"></td>'
+      + '<td class="num mono">'+esc(e.id)+'</td>'
+      + '<td><strong>'+esc(e.name)+'</strong>'
+        + (e.idNo?'<div class="mono" style="color:var(--text3);font-size:12px">'+esc(maskIdNo(e.idNo))+'</div>':'')+'</td>'
+      + '<td>'+esc(e.org)
+        + (e.remark?'<div style="color:var(--text3);font-size:12px">'+esc(e.remark)+'</div>':'')+'</td>'
+      /* 精简模板只有「专业类别」→ 二级专业，一级专业可能为空，避免显示成 "/ 建筑工程" */
+      + '<td>'+esc([e.major1,e.major2].filter(function(x){return x;}).join(' / '))+'</td>'
+      + '<td>'+esc(e.title||'-')+'</td>'
+      + '<td>'+(e.phone?esc(maskPhone(e.phone)):'-')+(e.email?'<div style="color:var(--text3);font-size:12px">'+esc(e.email)+'</div>':'')+'</td>'
+      + '<td><span class="tag '+cls+'">'+esc(s)+'</span></td>'
+      + '<td><button class="btn sm" onclick="openExpert(\''+e.id+'\')">编辑</button> '
+      + '<button class="btn sm dgr" onclick="delExpert(\''+e.id+'\')">删除</button></td>'
+      + '</tr>';
+  });
+  document.getElementById('expertTable').innerHTML = h + '</tbody></table>';
+  syncExpertSel();
+}
+
+/* ---------- 名录多选 / 批量删除 ---------- */
+function ckRows(){ return document.querySelectorAll('.ckE'); }
+
+function onExpertCheck(el){
+  var id = el.getAttribute('data-id');
+  if(el.checked) EX_SEL[id] = 1; else delete EX_SEL[id];
+  syncExpertSel();
+}
+
+/* 全选只作用于当前渲染出来的行（受搜索 / 状态筛选影响） */
+function toggleAllExperts(cb){
+  var cks = ckRows();
+  for(var i=0;i<cks.length;i++){
+    var id = cks[i].getAttribute('data-id');
+    cks[i].checked = cb.checked;
+    if(cb.checked) EX_SEL[id] = 1; else delete EX_SEL[id];
+  }
+  syncExpertSel();
+}
+
+/* 刷新「已选 N 人」与删除按钮显隐，不重渲染表格（避免勾选时滚动条跳动） */
+function syncExpertSel(){
+  /* 按 EX_SEL 统计而不是读 DOM 的 checked —— 渲染出来时 DOM 桩不一定把
+     checked 属性映射成属性，以 EX_SEL 为准才是稳定的 */
+  var cks = ckRows(), n = 0;
+  for(var i=0;i<cks.length;i++){ if(EX_SEL[cks[i].getAttribute('data-id')]) n++; }
+  var bar = document.getElementById('selBar');
+  var cnt = document.getElementById('selCnt');
+  var allBox = document.getElementById('ckAll');
+  if(cnt) cnt.textContent = '已选 ' + n + ' 人';
+  if(bar) bar.style.display = n ? 'inline-flex' : 'none';
+  if(allBox) allBox.checked = (cks.length > 0 && n === cks.length);
+}
+
+function clearExpertSel(){
+  EX_SEL = {};
+  renderExperts();
+}
+
+function delSelectedExperts(){
+  var ids = Object.keys(EX_SEL);
+  if(!ids.length) return;
+  if(!confirm('确认删除选中的 ' + ids.length + ' 位专家？此操作不可撤销。')) return;
+  var all = experts();
+  setExperts(all.filter(function(e){ return ids.indexOf(e.id) < 0; }));
+  EX_SEL = {};
+  renderExperts();
+  refreshDatalist();
+  alert('已删除 ' + ids.length + ' 位专家。');
+}
+
+/* ================= CSV ================= */
+function parseCSV(text){
+  text = text.replace(/^\uFEFF/,'');
+  var rows=[], row=[], cur='', q=false;
+  for(var i=0;i<text.length;i++){
+    var c=text[i];
+    if(q){
+      if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else q=false; }
+      else cur+=c;
+    } else {
+      if(c==='"') q=true;
+      else if(c===','){ row.push(cur); cur=''; }
+      else if(c==='\n'){ row.push(cur); rows.push(row); row=[]; cur=''; }
+      else if(c==='\r'){ /* skip */ }
+      else cur+=c;
+    }
+  }
+  if(cur!==''||row.length){ row.push(cur); rows.push(row); }
+  return rows.filter(function(r){ return r.some(function(x){ return String(x).trim()!==''; }); });
+}
+function toCSV(rows){
+  return '\uFEFF' + rows.map(function(r){
+    return r.map(function(c){
+      var s = (c==null?'':String(c));
+      return /[",\n\r]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+    }).join(',');
+  }).join('\r\n');
+}
+function download(name, content, mime){
+  var blob = new Blob([content], {type:mime||'text/plain;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+}
+function downloadTemplate(){
+  var head = TPL_COLS.map(function(c){ return c.label; });
+  download('专家库模板.csv', toCSV([head]), 'text/csv;charset=utf-8');
+}
+/* 导出与「下载模板」同一套 10 列，序号从 1 编起。
+   回导安全：CSV 里没有的列（执业资格/一级专业/所在地/邮箱）导入时不会写空值覆盖，
+   且导入按「姓名 + 单位」匹配已有专家，不会因缺编号重复入库。 */
+function exportCSV(){
+  var all = experts();
+  if(!all.length){ alert('专家库为空'); return; }
+  var rows = [ TPL_COLS.map(function(c){ return c.label; }) ];
+  all.forEach(function(e, i){
+    rows.push(TPL_COLS.map(function(c){ return c.k ? (e[c.k]||'') : String(i+1); }));
+  });
+  download('专家库_'+todayStr()+'.csv', toCSV(rows), 'text/csv;charset=utf-8');
+}
+/* 读文本文件：先按严格 UTF-8 解，失败（Excel「另存为 CSV」默认存成 GBK/ANSI）回落 GB18030。
+   曾经固定 readAsText(f,'UTF-8')，Excel 存出来的 CSV 整表变乱码且静默入库。 */
+function readFileText(file, cb){
+  var rd = new FileReader();
+  rd.onerror = function(){ cb(''); };
+  rd.onload = function(){
+    var buf = rd.result, txt;
+    try { txt = new TextDecoder('utf-8', {fatal:true}).decode(buf); }
+    catch(e){
+      try { txt = new TextDecoder('gb18030').decode(buf); }
+      catch(e2){ txt = new TextDecoder('utf-8').decode(buf); }
+    }
+    cb(String(txt||'').replace(/^\uFEFF/, ''));
+  };
+  rd.readAsArrayBuffer(file);
+}
+
+function importCSV(input){
+  var f = input.files[0];
+  if(!f) return;
+  readFileText(f, function(text){
+    var rows = parseCSV(text);
+    if(rows.length<2){ alert('文件内容为空或格式不正确'); input.value=''; return; }
+    var head = rows[0].map(function(x){ return String(x).trim(); });
+    var map = [];
+    head.forEach(function(h){ map.push(fieldByLabel(h)); });
+
+    var all = experts(), added=0, updated=0;
+    var seq = all.length;
+    for(var i=1;i<rows.length;i++){
+      var r = rows[i], o = {};
+      for(var c=0;c<map.length;c++){ if(map[c]) o[map[c].k] = String(r[c]==null?'':r[c]).trim(); }
+      if(!o.name) continue;
+      var exist = null;
+      for(var k=0;k<all.length;k++){
+        if(o.id && all[k].id===o.id){ exist=k; break; }
+        if(!o.id && all[k].name===o.name && all[k].org===o.org){ exist=k; break; }
+      }
+      if(exist!=null){ for(var kk in o){ if(o[kk]) all[exist][kk]=o[kk]; } updated++; }
+      else { seq++; o.id = o.id || ('EX'+String(seq).padStart(4,'0')); o.status = o.status||'在库'; all.push(o); added++; }
+    }
+    setExperts(all);
+    renderExperts(); refreshDatalist();
+    alert('导入完成：新增 '+added+' 条，更新 '+updated+' 条');
+    input.value='';
+  });
+}
+
+/* ================= 备份 ================= */
+function exportBackup(){
+  download('评标专家抽取系统_备份_'+todayStr()+'.json',
+    JSON.stringify({v:1, at:nowStr(), experts:experts(), records:records()}, null, 2),
+    'application/json');
+}
+function importBackup(input){
+  var f = input.files[0];
+  if(!f) return;
+  var rd = new FileReader();
+  rd.onload = function(){
+    try{
+      var d = JSON.parse(rd.result);
+      /* 必须是数组。只判空不够——非数组的 experts 会把专家库整个写坏（例如变成字符串） */
+      if(!d || typeof d !== 'object' || !Array.isArray(d.experts) || (d.records != null && !Array.isArray(d.records))){
+        alert('这不是本工具的备份文件：缺少有效的专家库数据，已取消恢复。');
+        input.value=''; return;
+      }
+      if(!confirm('恢复备份将覆盖当前全部数据（专家 '+experts().length+' 条，记录 '+records().length+' 条），确认继续？')) { input.value=''; return; }
+      setExperts(d.experts); setRecords(d.records||[]);
+      renderExperts(); renderRecords(); refreshDatalist(); refreshRedrawSrc(); renderRedrawRecords();
+      alert('恢复成功：专家 '+d.experts.length+' 条，抽取记录 '+(d.records||[]).length+' 条');
+    }catch(e){ alert('备份文件无法解析'); }
+    input.value='';
+  };
+  rd.readAsText(f,'UTF-8');
+}
+
+/* ================= 行政区域 / 时间选项 / 委员会校验 ================= */
+var REGIONS = {"北京市":{"北京市":["东城区","西城区","朝阳区","丰台区","石景山区","海淀区","门头沟区","房山区","通州区","顺义区","昌平区","大兴区","怀柔区","平谷区","密云区","延庆区"]},"天津市":{"天津市":["和平区","河东区","河西区","南开区","河北区","红桥区","东丽区","西青区","津南区","北辰区","武清区","宝坻区","滨海新区","宁河区","静海区","蓟州区"]},"河北省":{"石家庄市":["长安区","桥西区","新华区","井陉矿区","裕华区","藁城区","鹿泉区","栾城区","井陉县","正定县","行唐县","灵寿县","高邑县","深泽县","赞皇县","无极县","平山县","元氏县","赵县","石家庄高新技术产业开发区","石家庄循环化工园区","辛集市","晋州市","新乐市"],"唐山市":["路南区","路北区","古冶区","开平区","丰南区","丰润区","曹妃甸区","滦南县","乐亭县","迁西县","玉田县","河北唐山芦台经济开发区","唐山市汉沽管理区","唐山高新技术产业开发区","河北唐山海港经济开发区","遵化市","迁安市","滦州市"],"秦皇岛市":["海港区","山海关区","北戴河区","抚宁区","青龙满族自治县","昌黎县","卢龙县","秦皇岛市经济技术开发区","北戴河新区"],"邯郸市":["邯山区","丛台区","复兴区","峰峰矿区","肥乡区","永年区","临漳县","成安县","大名县","涉县","磁县","邱县","鸡泽县","广平县","馆陶县","魏县","曲周县","邯郸经济技术开发区","邯郸冀南新区","武安市"],"邢台市":["襄都区","信都区","任泽区","南和区","临城县","内丘县","柏乡县","隆尧县","宁晋县","巨鹿县","新河县","广宗县","平乡县","威县","清河县","临西县","河北邢台经济开发区","南宫市","沙河市"],"保定市":["竞秀区","莲池区","满城区","清苑区","徐水区","涞水县","阜平县","定兴县","唐县","高阳县","容城县","涞源县","望都县","安新县","易县","曲阳县","蠡县","顺平县","博野县","雄县","保定高新技术产业开发区","保定白沟新城","涿州市","定州市","安国市","高碑店市"],"张家口市":["桥东区","桥西区","宣化区","下花园区","万全区","崇礼区","张北县","康保县","沽源县","尚义县","蔚县","阳原县","怀安县","怀来县","涿鹿县","赤城县","张家口经济开发区","张家口市察北管理区","张家口市塞北管理区"],"承德市":["双桥区","双滦区","鹰手营子矿区","承德县","兴隆县","滦平县","隆化县","丰宁满族自治县","宽城满族自治县","围场满族蒙古族自治县","承德高新技术产业开发区","平泉市"],"沧州市":["新华区","运河区","沧县","青县","东光县","海兴县","盐山县","肃宁县","南皮县","吴桥县","献县","孟村回族自治县","河北沧州经济开发区","沧州高新技术产业开发区","沧州渤海新区","泊头市","任丘市","黄骅市","河间市"],"廊坊市":["安次区","广阳区","固安县","永清县","香河县","大城县","文安县","大厂回族自治县","廊坊经济技术开发区","霸州市","三河市"],"衡水市":["桃城区","冀州区","枣强县","武邑县","武强县","饶阳县","安平县","故城县","景县","阜城县","河北衡水高新技术产业开发区","衡水滨湖新区","深州市"]},"山西省":{"太原市":["小店区","迎泽区","杏花岭区","尖草坪区","万柏林区","晋源区","清徐县","阳曲县","娄烦县","山西转型综合改革示范区","古交市"],"大同市":["新荣区","平城区","云冈区","云州区","阳高县","天镇县","广灵县","灵丘县","浑源县","左云县","山西大同经济开发区"],"阳泉市":["城区","矿区","郊区","平定县","盂县"],"长治市":["潞州区","上党区","屯留区","潞城区","襄垣县","平顺县","黎城县","壶关县","长子县","武乡县","沁县","沁源县"],"晋城市":["城区","沁水县","阳城县","陵川县","泽州县","高平市"],"朔州市":["朔城区","平鲁区","山阴县","应县","右玉县","山西朔州经济开发区","怀仁市"],"晋中市":["榆次区","太谷区","榆社县","左权县","和顺县","昔阳县","寿阳县","祁县","平遥县","灵石县","介休市"],"运城市":["盐湖区","临猗县","万荣县","闻喜县","稷山县","新绛县","绛县","垣曲县","夏县","平陆县","芮城县","永济市","河津市"],"忻州市":["忻府区","定襄县","五台县","代县","繁峙县","宁武县","静乐县","神池县","五寨县","岢岚县","河曲县","保德县","偏关县","五台山风景名胜区","原平市"],"临汾市":["尧都区","曲沃县","翼城县","襄汾县","洪洞县","古县","安泽县","浮山县","吉县","乡宁县","大宁县","隰县","永和县","蒲县","汾西县","侯马市","霍州市"],"吕梁市":["离石区","文水县","交城县","兴县","临县","柳林县","石楼县","岚县","方山县","中阳县","交口县","孝义市","汾阳市"]},"内蒙古自治区":{"呼和浩特市":["新城区","回民区","玉泉区","赛罕区","土默特左旗","托克托县","和林格尔县","清水河县","武川县","呼和浩特经济技术开发区"],"包头市":["东河区","昆都仑区","青山区","石拐区","白云鄂博矿区","九原区","土默特右旗","固阳县","达尔罕茂明安联合旗","包头稀土高新技术产业开发区"],"乌海市":["海勃湾区","海南区","乌达区"],"赤峰市":["红山区","元宝山区","松山区","阿鲁科尔沁旗","巴林左旗","巴林右旗","林西县","克什克腾旗","翁牛特旗","喀喇沁旗","宁城县","敖汉旗"],"通辽市":["科尔沁区","科尔沁左翼中旗","科尔沁左翼后旗","开鲁县","库伦旗","奈曼旗","扎鲁特旗","通辽经济技术开发区","霍林郭勒市"],"鄂尔多斯市":["东胜区","康巴什区","达拉特旗","准格尔旗","鄂托克前旗","鄂托克旗","杭锦旗","乌审旗","伊金霍洛旗"],"呼伦贝尔市":["海拉尔区","扎赉诺尔区","阿荣旗","莫力达瓦达斡尔族自治旗","鄂伦春自治旗","鄂温克族自治旗","陈巴尔虎旗","新巴尔虎左旗","新巴尔虎右旗","满洲里市","牙克石市","扎兰屯市","额尔古纳市","根河市"],"巴彦淖尔市":["临河区","五原县","磴口县","乌拉特前旗","乌拉特中旗","乌拉特后旗","杭锦后旗"],"乌兰察布市":["集宁区","卓资县","化德县","商都县","兴和县","凉城县","察哈尔右翼前旗","察哈尔右翼中旗","察哈尔右翼后旗","四子王旗","丰镇市"],"兴安盟":["乌兰浩特市","阿尔山市","科尔沁右翼前旗","科尔沁右翼中旗","扎赉特旗","突泉县"],"锡林郭勒盟":["二连浩特市","锡林浩特市","阿巴嘎旗","苏尼特左旗","苏尼特右旗","东乌珠穆沁旗","西乌珠穆沁旗","太仆寺旗","镶黄旗","正镶白旗","正蓝旗","多伦县","乌拉盖管理区管委会"],"阿拉善盟":["阿拉善左旗","阿拉善右旗","额济纳旗","内蒙古阿拉善高新技术产业开发区"]},"辽宁省":{"沈阳市":["和平区","沈河区","大东区","皇姑区","铁西区","苏家屯区","浑南区","沈北新区","于洪区","辽中区","康平县","法库县","新民市"],"大连市":["中山区","西岗区","沙河口区","甘井子区","旅顺口区","金州区","普兰店区","长海县","瓦房店市","庄河市"],"鞍山市":["铁东区","铁西区","立山区","千山区","台安县","岫岩满族自治县","海城市"],"抚顺市":["新抚区","东洲区","望花区","顺城区","抚顺县","新宾满族自治县","清原满族自治县"],"本溪市":["平山区","溪湖区","明山区","南芬区","本溪满族自治县","桓仁满族自治县"],"丹东市":["元宝区","振兴区","振安区","宽甸满族自治县","东港市","凤城市"],"锦州市":["古塔区","凌河区","太和区","黑山县","义县","凌海市","北镇市"],"营口市":["站前区","西市区","鲅鱼圈区","老边区","盖州市","大石桥市"],"阜新市":["海州区","新邱区","太平区","清河门区","细河区","阜新蒙古族自治县","彰武县"],"辽阳市":["白塔区","文圣区","宏伟区","弓长岭区","太子河区","辽阳县","灯塔市"],"盘锦市":["双台子区","兴隆台区","大洼区","盘山县"],"铁岭市":["银州区","清河区","铁岭县","西丰县","昌图县","调兵山市","开原市"],"朝阳市":["双塔区","龙城区","朝阳县","建平县","喀喇沁左翼蒙古族自治县","北票市","凌源市"],"葫芦岛市":["连山区","龙港区","南票区","绥中县","建昌县","兴城市"]},"吉林省":{"长春市":["南关区","宽城区","朝阳区","二道区","绿园区","双阳区","九台区","农安县","长春经济技术开发区","长春净月高新技术产业开发区","长春高新技术产业开发区","长春汽车经济技术开发区","榆树市","德惠市","公主岭市"],"吉林市":["昌邑区","龙潭区","船营区","丰满区","永吉县","吉林经济开发区","吉林高新技术产业开发区","吉林中国新加坡食品区","蛟河市","桦甸市","舒兰市","磐石市"],"四平市":["铁西区","铁东区","梨树县","伊通满族自治县","双辽市"],"辽源市":["龙山区","西安区","东丰县","东辽县"],"通化市":["东昌区","二道江区","通化县","辉南县","柳河县","梅河口市","集安市"],"白山市":["浑江区","江源区","抚松县","靖宇县","长白朝鲜族自治县","临江市"],"松原市":["宁江区","前郭尔罗斯蒙古族自治县","长岭县","乾安县","吉林松原经济开发区","扶余市"],"白城市":["洮北区","镇赉县","通榆县","吉林白城经济开发区","洮南市","大安市"],"延边朝鲜族自治州":["延吉市","图们市","敦化市","珲春市","龙井市","和龙市","汪清县","安图县"]},"黑龙江省":{"哈尔滨市":["道里区","南岗区","道外区","平房区","松北区","香坊区","呼兰区","阿城区","双城区","依兰县","方正县","宾县","巴彦县","木兰县","通河县","延寿县","尚志市","五常市"],"齐齐哈尔市":["龙沙区","建华区","铁锋区","昂昂溪区","富拉尔基区","碾子山区","梅里斯达斡尔族区","龙江县","依安县","泰来县","甘南县","富裕县","克山县","克东县","拜泉县","讷河市"],"鸡西市":["鸡冠区","恒山区","滴道区","梨树区","城子河区","麻山区","鸡东县","虎林市","密山市"],"鹤岗市":["向阳区","工农区","南山区","兴安区","东山区","兴山区","萝北县","绥滨县"],"双鸭山市":["尖山区","岭东区","四方台区","宝山区","集贤县","友谊县","宝清县","饶河县"],"大庆市":["萨尔图区","龙凤区","让胡路区","红岗区","大同区","肇州县","肇源县","林甸县","杜尔伯特蒙古族自治县","大庆高新技术产业开发区"],"伊春市":["伊美区","乌翠区","友好区","嘉荫县","汤旺县","丰林县","大箐山县","南岔县","金林区","铁力市"],"佳木斯市":["向阳区","前进区","东风区","郊区","桦南县","桦川县","汤原县","同江市","富锦市","抚远市"],"七台河市":["新兴区","桃山区","茄子河区","勃利县"],"牡丹江市":["东安区","阳明区","爱民区","西安区","林口县","绥芬河市","海林市","宁安市","穆棱市","东宁市"],"黑河市":["爱辉区","逊克县","孙吴县","北安市","五大连池市","嫩江市"],"绥化市":["北林区","望奎县","兰西县","青冈县","庆安县","明水县","绥棱县","安达市","肇东市","海伦市"],"大兴安岭地区":["漠河市","呼玛县","塔河县","加格达奇区","松岭区","新林区","呼中区"]},"上海市":{"上海市":["黄浦区","徐汇区","长宁区","静安区","普陀区","虹口区","杨浦区","闵行区","宝山区","嘉定区","浦东新区","金山区","松江区","青浦区","奉贤区","崇明区"]},"江苏省":{"南京市":["玄武区","秦淮区","建邺区","鼓楼区","浦口区","栖霞区","雨花台区","江宁区","六合区","溧水区","高淳区"],"无锡市":["锡山区","惠山区","滨湖区","梁溪区","新吴区","江阴市","宜兴市"],"徐州市":["鼓楼区","云龙区","贾汪区","泉山区","铜山区","丰县","沛县","睢宁县","徐州经济技术开发区","新沂市","邳州市"],"常州市":["天宁区","钟楼区","新北区","武进区","金坛区","溧阳市"],"苏州市":["虎丘区","吴中区","相城区","姑苏区","吴江区","苏州工业园区","常熟市","张家港市","昆山市","太仓市"],"南通市":["通州区","崇川区","海门区","如东县","南通经济技术开发区","启东市","如皋市","海安市"],"连云港市":["连云区","海州区","赣榆区","东海县","灌云县","灌南县","连云港经济技术开发区"],"淮安市":["淮安区","淮阴区","清江浦区","洪泽区","涟水县","盱眙县","金湖县","淮安经济技术开发区"],"盐城市":["亭湖区","盐都区","大丰区","响水县","滨海县","阜宁县","射阳县","建湖县","盐城经济技术开发区","东台市"],"扬州市":["广陵区","邗江区","江都区","宝应县","扬州经济技术开发区","仪征市","高邮市"],"镇江市":["京口区","润州区","丹徒区","镇江新区","丹阳市","扬中市","句容市"],"泰州市":["海陵区","高港区","姜堰区","兴化市","靖江市","泰兴市"],"宿迁市":["宿城区","宿豫区","沭阳县","泗阳县","泗洪县","宿迁经济技术开发区"]},"浙江省":{"杭州市":["上城区","拱墅区","西湖区","滨江区","萧山区","余杭区","富阳区","临安区","临平区","钱塘区","桐庐县","淳安县","建德市"],"宁波市":["海曙区","江北区","北仑区","镇海区","鄞州区","奉化区","象山县","宁海县","余姚市","慈溪市"],"温州市":["鹿城区","龙湾区","瓯海区","洞头区","永嘉县","平阳县","苍南县","文成县","泰顺县","瑞安市","乐清市","龙港市"],"嘉兴市":["南湖区","秀洲区","嘉善县","海盐县","海宁市","平湖市","桐乡市"],"湖州市":["吴兴区","南浔区","德清县","长兴县","安吉县"],"绍兴市":["越城区","柯桥区","上虞区","新昌县","诸暨市","嵊州市"],"金华市":["婺城区","金东区","武义县","浦江县","磐安县","兰溪市","义乌市","东阳市","永康市"],"衢州市":["柯城区","衢江区","常山县","开化县","龙游县","江山市"],"舟山市":["定海区","普陀区","岱山县","嵊泗县"],"台州市":["椒江区","黄岩区","路桥区","三门县","天台县","仙居县","温岭市","临海市","玉环市"],"丽水市":["莲都区","青田县","缙云县","遂昌县","松阳县","云和县","庆元县","景宁畲族自治县","龙泉市"]},"安徽省":{"合肥市":["瑶海区","庐阳区","蜀山区","包河区","长丰县","肥东县","肥西县","庐江县","合肥高新技术产业开发区","合肥经济技术开发区","合肥新站高新技术产业开发区","巢湖市"],"芜湖市":["镜湖区","鸠江区","弋江区","湾沚区","繁昌区","南陵县","芜湖经济技术开发区","安徽芜湖三山经济开发区","无为市"],"蚌埠市":["龙子湖区","蚌山区","禹会区","淮上区","怀远县","五河县","固镇县","蚌埠市高新技术开发区","蚌埠市经济开发区"],"淮南市":["大通区","田家庵区","谢家集区","八公山区","潘集区","凤台县","寿县"],"马鞍山市":["花山区","雨山区","博望区","当涂县","含山县","和县"],"淮北市":["杜集区","相山区","烈山区","濉溪县"],"铜陵市":["铜官区","义安区","郊区","枞阳县"],"安庆市":["迎江区","大观区","宜秀区","怀宁县","太湖县","宿松县","望江县","岳西县","安徽安庆经济开发区","桐城市","潜山市"],"黄山市":["屯溪区","黄山区","徽州区","歙县","休宁县","黟县","祁门县"],"滁州市":["琅琊区","南谯区","来安县","全椒县","定远县","凤阳县","中新苏滁高新技术产业开发区","滁州经济技术开发区","天长市","明光市"],"阜阳市":["颍州区","颍东区","颍泉区","临泉县","太和县","阜南县","颍上县","阜阳合肥现代产业园区","阜阳经济技术开发区","界首市"],"宿州市":["埇桥区","砀山县","萧县","灵璧县","泗县","宿州马鞍山现代产业园区","宿州经济技术开发区"],"六安市":["金安区","裕安区","叶集区","霍邱县","舒城县","金寨县","霍山县"],"亳州市":["谯城区","涡阳县","蒙城县","利辛县"],"池州市":["贵池区","东至县","石台县","青阳县"],"宣城市":["宣州区","郎溪县","泾县","绩溪县","旌德县","宣城市经济开发区","宁国市","广德市"]},"福建省":{"福州市":["鼓楼区","台江区","仓山区","马尾区","晋安区","长乐区","闽侯县","连江县","罗源县","闽清县","永泰县","平潭县","福清市"],"厦门市":["思明区","海沧区","湖里区","集美区","同安区","翔安区"],"莆田市":["城厢区","涵江区","荔城区","秀屿区","仙游县"],"三明市":["三元区","沙县区","明溪县","清流县","宁化县","大田县","尤溪县","将乐县","泰宁县","建宁县","永安市"],"泉州市":["鲤城区","丰泽区","洛江区","泉港区","惠安县","安溪县","永春县","德化县","金门县","石狮市","晋江市","南安市"],"漳州市":["芗城区","龙文区","龙海区","长泰区","云霄县","漳浦县","诏安县","东山县","南靖县","平和县","华安县"],"南平市":["延平区","建阳区","顺昌县","浦城县","光泽县","松溪县","政和县","邵武市","武夷山市","建瓯市"],"龙岩市":["新罗区","永定区","长汀县","上杭县","武平县","连城县","漳平市"],"宁德市":["蕉城区","霞浦县","古田县","屏南县","寿宁县","周宁县","柘荣县","福安市","福鼎市"]},"江西省":{"南昌市":["东湖区","西湖区","青云谱区","青山湖区","新建区","红谷滩区","南昌县","安义县","进贤县"],"景德镇市":["昌江区","珠山区","浮梁县","乐平市"],"萍乡市":["安源区","湘东区","莲花县","上栗县","芦溪县"],"九江市":["濂溪区","浔阳区","柴桑区","武宁县","修水县","永修县","德安县","都昌县","湖口县","彭泽县","瑞昌市","共青城市","庐山市"],"新余市":["渝水区","分宜县"],"鹰潭市":["月湖区","余江区","贵溪市"],"赣州市":["章贡区","南康区","赣县区","信丰县","大余县","上犹县","崇义县","安远县","定南县","全南县","宁都县","于都县","兴国县","会昌县","寻乌县","石城县","瑞金市","龙南市"],"吉安市":["吉州区","青原区","吉安县","吉水县","峡江县","新干县","永丰县","泰和县","遂川县","万安县","安福县","永新县","井冈山市"],"宜春市":["袁州区","奉新县","万载县","上高县","宜丰县","靖安县","铜鼓县","丰城市","樟树市","高安市"],"抚州市":["临川区","东乡区","南城县","黎川县","南丰县","崇仁县","乐安县","宜黄县","金溪县","资溪县","广昌县"],"上饶市":["信州区","广丰区","广信区","玉山县","铅山县","横峰县","弋阳县","余干县","鄱阳县","万年县","婺源县","德兴市"]},"山东省":{"济南市":["历下区","市中区","槐荫区","天桥区","历城区","长清区","章丘区","济阳区","莱芜区","钢城区","平阴县","商河县","济南高新技术产业开发区"],"青岛市":["市南区","市北区","黄岛区","崂山区","李沧区","城阳区","即墨区","胶州市","平度市","莱西市"],"淄博市":["淄川区","张店区","博山区","临淄区","周村区","桓台县","高青县","沂源县"],"枣庄市":["市中区","薛城区","峄城区","台儿庄区","山亭区","滕州市"],"东营市":["东营区","河口区","垦利区","利津县","广饶县","东营经济技术开发区","东营港经济开发区"],"烟台市":["芝罘区","福山区","牟平区","莱山区","蓬莱区","烟台高新技术产业开发区","烟台经济技术开发区","龙口市","莱阳市","莱州市","招远市","栖霞市","海阳市"],"潍坊市":["潍城区","寒亭区","坊子区","奎文区","临朐县","昌乐县","潍坊滨海经济技术开发区","青州市","诸城市","寿光市","安丘市","高密市","昌邑市"],"济宁市":["任城区","兖州区","微山县","鱼台县","金乡县","嘉祥县","汶上县","泗水县","梁山县","济宁高新技术产业开发区","曲阜市","邹城市"],"泰安市":["泰山区","岱岳区","宁阳县","东平县","新泰市","肥城市"],"威海市":["环翠区","文登区","威海火炬高技术产业开发区","威海经济技术开发区","威海临港经济技术开发区","荣成市","乳山市"],"日照市":["东港区","岚山区","五莲县","莒县","日照经济技术开发区"],"临沂市":["兰山区","罗庄区","河东区","沂南县","郯城县","沂水县","兰陵县","费县","平邑县","莒南县","蒙阴县","临沭县","临沂高新技术产业开发区"],"德州市":["德城区","陵城区","宁津县","庆云县","临邑县","齐河县","平原县","夏津县","武城县","德州天衢新区","乐陵市","禹城市"],"聊城市":["东昌府区","茌平区","阳谷县","莘县","东阿县","冠县","高唐县","临清市"],"滨州市":["滨城区","沾化区","惠民县","阳信县","无棣县","博兴县","邹平市"],"菏泽市":["牡丹区","定陶区","曹县","单县","成武县","巨野县","郓城县","鄄城县","东明县","菏泽经济技术开发区","菏泽高新技术开发区"]},"河南省":{"郑州市":["中原区","二七区","管城回族区","金水区","上街区","惠济区","中牟县","郑州经济技术开发区","郑州高新技术产业开发区","郑州航空港经济综合实验区","巩义市","荥阳市","新密市","新郑市","登封市"],"开封市":["龙亭区","顺河回族区","鼓楼区","禹王台区","祥符区","杞县","通许县","尉氏县","兰考县"],"洛阳市":["老城区","西工区","瀍河回族区","涧西区","偃师区","孟津区","洛龙区","新安县","栾川县","嵩县","汝阳县","宜阳县","洛宁县","伊川县","洛阳高新技术产业开发区"],"平顶山市":["新华区","卫东区","石龙区","湛河区","宝丰县","叶县","鲁山县","郏县","平顶山高新技术产业开发区","平顶山市城乡一体化示范区","舞钢市","汝州市"],"安阳市":["文峰区","北关区","殷都区","龙安区","安阳县","汤阴县","滑县","内黄县","安阳高新技术产业开发区","林州市"],"鹤壁市":["鹤山区","山城区","淇滨区","浚县","淇县","鹤壁经济技术开发区"],"新乡市":["红旗区","卫滨区","凤泉区","牧野区","新乡县","获嘉县","原阳县","延津县","封丘县","新乡高新技术产业开发区","新乡经济技术开发区","新乡市平原城乡一体化示范区","卫辉市","辉县市","长垣市"],"焦作市":["解放区","中站区","马村区","山阳区","修武县","博爱县","武陟县","温县","焦作城乡一体化示范区","沁阳市","孟州市"],"濮阳市":["华龙区","清丰县","南乐县","范县","台前县","濮阳县","河南濮阳工业园区","濮阳经济技术开发区"],"许昌市":["魏都区","建安区","鄢陵县","襄城县","许昌经济技术开发区","禹州市","长葛市"],"漯河市":["源汇区","郾城区","召陵区","舞阳县","临颍县","漯河经济技术开发区"],"三门峡市":["湖滨区","陕州区","渑池县","卢氏县","河南三门峡经济开发区","义马市","灵宝市"],"南阳市":["宛城区","卧龙区","南召县","方城县","西峡县","镇平县","内乡县","淅川县","社旗县","唐河县","新野县","桐柏县","南阳高新技术产业开发区","南阳市城乡一体化示范区","邓州市"],"商丘市":["梁园区","睢阳区","民权县","睢县","宁陵县","柘城县","虞城县","夏邑县","豫东综合物流产业聚集区","河南商丘经济开发区","永城市"],"信阳市":["浉河区","平桥区","罗山县","光山县","新县","商城县","固始县","潢川县","淮滨县","息县","信阳高新技术产业开发区"],"周口市":["川汇区","淮阳区","扶沟县","西华县","商水县","沈丘县","郸城县","太康县","鹿邑县","周口临港开发区","项城市"],"驻马店市":["驿城区","西平县","上蔡县","平舆县","正阳县","确山县","泌阳县","汝南县","遂平县","新蔡县","河南驻马店经济开发区"],"济源市":[]},"湖北省":{"武汉市":["江岸区","江汉区","硚口区","汉阳区","武昌区","青山区","洪山区","东西湖区","汉南区","蔡甸区","江夏区","黄陂区","新洲区"],"黄石市":["黄石港区","西塞山区","下陆区","铁山区","阳新县","大冶市"],"十堰市":["茅箭区","张湾区","郧阳区","郧西县","竹山县","竹溪县","房县","丹江口市"],"宜昌市":["西陵区","伍家岗区","点军区","猇亭区","夷陵区","远安县","兴山县","秭归县","长阳土家族自治县","五峰土家族自治县","宜都市","当阳市","枝江市"],"襄阳市":["襄城区","樊城区","襄州区","南漳县","谷城县","保康县","老河口市","枣阳市","宜城市"],"鄂州市":["梁子湖区","华容区","鄂城区"],"荆门市":["东宝区","掇刀区","沙洋县","钟祥市","京山市"],"孝感市":["孝南区","孝昌县","大悟县","云梦县","应城市","安陆市","汉川市"],"荆州市":["沙市区","荆州区","公安县","江陵县","荆州经济技术开发区","石首市","洪湖市","松滋市","监利市"],"黄冈市":["黄州区","团风县","红安县","罗田县","英山县","浠水县","蕲春县","黄梅县","龙感湖管理区","麻城市","武穴市"],"咸宁市":["咸安区","嘉鱼县","通城县","崇阳县","通山县","赤壁市"],"随州市":["曾都区","随县","广水市"],"恩施土家族苗族自治州":["恩施市","利川市","建始县","巴东县","宣恩县","咸丰县","来凤县","鹤峰县"],"仙桃市":[],"潜江市":[],"天门市":[],"神农架林区":[]},"湖南省":{"长沙市":["芙蓉区","天心区","岳麓区","开福区","雨花区","望城区","长沙县","浏阳市","宁乡市"],"株洲市":["荷塘区","芦淞区","石峰区","天元区","渌口区","攸县","茶陵县","炎陵县","醴陵市"],"湘潭市":["雨湖区","岳塘区","湘潭县","湖南湘潭高新技术产业园区","湘潭昭山示范区","湘潭九华示范区","湘乡市","韶山市"],"衡阳市":["珠晖区","雁峰区","石鼓区","蒸湘区","南岳区","衡阳县","衡南县","衡山县","衡东县","祁东县","湖南衡阳松木经济开发区","湖南衡阳高新技术产业园区","耒阳市","常宁市"],"邵阳市":["双清区","大祥区","北塔区","新邵县","邵阳县","隆回县","洞口县","绥宁县","新宁县","城步苗族自治县","武冈市","邵东市"],"岳阳市":["岳阳楼区","云溪区","君山区","岳阳县","华容县","湘阴县","平江县","岳阳市屈原管理区","汨罗市","临湘市"],"常德市":["武陵区","鼎城区","安乡县","汉寿县","澧县","临澧县","桃源县","石门县","常德市西洞庭管理区","津市市"],"张家界市":["永定区","武陵源区","慈利县","桑植县"],"益阳市":["资阳区","赫山区","南县","桃江县","安化县","益阳市大通湖管理区","湖南益阳高新技术产业园区","沅江市"],"郴州市":["北湖区","苏仙区","桂阳县","宜章县","永兴县","嘉禾县","临武县","汝城县","桂东县","安仁县","资兴市"],"永州市":["零陵区","冷水滩区","东安县","双牌县","道县","江永县","宁远县","蓝山县","新田县","江华瑶族自治县","永州经济技术开发区","永州市回龙圩管理区","祁阳市"],"怀化市":["鹤城区","中方县","沅陵县","辰溪县","溆浦县","会同县","麻阳苗族自治县","新晃侗族自治县","芷江侗族自治县","靖州苗族侗族自治县","通道侗族自治县","怀化市洪江管理区","洪江市"],"娄底市":["娄星区","双峰县","新化县","冷水江市","涟源市"],"湘西土家族苗族自治州":["吉首市","泸溪县","凤凰县","花垣县","保靖县","古丈县","永顺县","龙山县"]},"广东省":{"广州市":["荔湾区","越秀区","海珠区","天河区","白云区","黄埔区","番禺区","花都区","南沙区","从化区","增城区"],"韶关市":["武江区","浈江区","曲江区","始兴县","仁化县","翁源县","乳源瑶族自治县","新丰县","乐昌市","南雄市"],"深圳市":["罗湖区","福田区","南山区","宝安区","龙岗区","盐田区","龙华区","坪山区","光明区"],"珠海市":["香洲区","斗门区","金湾区"],"汕头市":["龙湖区","金平区","濠江区","潮阳区","潮南区","澄海区","南澳县"],"佛山市":["禅城区","南海区","顺德区","三水区","高明区"],"江门市":["蓬江区","江海区","新会区","台山市","开平市","鹤山市","恩平市"],"湛江市":["赤坎区","霞山区","坡头区","麻章区","遂溪县","徐闻县","廉江市","雷州市","吴川市"],"茂名市":["茂南区","电白区","高州市","化州市","信宜市"],"肇庆市":["端州区","鼎湖区","高要区","广宁县","怀集县","封开县","德庆县","四会市"],"惠州市":["惠城区","惠阳区","博罗县","惠东县","龙门县"],"梅州市":["梅江区","梅县区","大埔县","丰顺县","五华县","平远县","蕉岭县","兴宁市"],"汕尾市":["城区","海丰县","陆河县","陆丰市"],"河源市":["源城区","紫金县","龙川县","连平县","和平县","东源县"],"阳江市":["江城区","阳东区","阳西县","阳春市"],"清远市":["清城区","清新区","佛冈县","阳山县","连山壮族瑶族自治县","连南瑶族自治县","英德市","连州市"],"东莞市":["东城街道","南城街道","万江街道","莞城街道","石碣镇","石龙镇","茶山镇","石排镇","企石镇","横沥镇","桥头镇","谢岗镇","东坑镇","常平镇","寮步镇","樟木头镇","大朗镇","黄江镇","清溪镇","塘厦镇","凤岗镇","大岭山镇","长安镇","虎门镇","厚街镇","沙田镇","道滘镇","洪梅镇","麻涌镇","望牛墩镇","中堂镇","高埗镇","松山湖","东莞港","东莞生态园","东莞滨海湾新区"],"中山市":["石岐街道","东区街道","中山港街道","西区街道","南区街道","五桂山街道","民众街道","南朗街道","黄圃镇","东凤镇","古镇镇","沙溪镇","坦洲镇","港口镇","三角镇","横栏镇","南头镇","阜沙镇","三乡镇","板芙镇","大涌镇","神湾镇","小榄镇"],"潮州市":["湘桥区","潮安区","饶平县"],"揭阳市":["榕城区","揭东区","揭西县","惠来县","普宁市"],"云浮市":["云城区","云安区","新兴县","郁南县","罗定市"]},"广西壮族自治区":{"南宁市":["兴宁区","青秀区","江南区","西乡塘区","良庆区","邕宁区","武鸣区","隆安县","马山县","上林县","宾阳县","横州市"],"柳州市":["城中区","鱼峰区","柳南区","柳北区","柳江区","柳城县","鹿寨县","融安县","融水苗族自治县","三江侗族自治县"],"桂林市":["秀峰区","叠彩区","象山区","七星区","雁山区","临桂区","阳朔县","灵川县","全州县","兴安县","永福县","灌阳县","龙胜各族自治县","资源县","平乐县","恭城瑶族自治县","荔浦市"],"梧州市":["万秀区","长洲区","龙圩区","苍梧县","藤县","蒙山县","岑溪市"],"北海市":["海城区","银海区","铁山港区","合浦县"],"防城港市":["港口区","防城区","上思县","东兴市"],"钦州市":["钦南区","钦北区","灵山县","浦北县"],"贵港市":["港北区","港南区","覃塘区","平南县","桂平市"],"玉林市":["玉州区","福绵区","容县","陆川县","博白县","兴业县","北流市"],"百色市":["右江区","田阳区","田东县","德保县","那坡县","凌云县","乐业县","田林县","西林县","隆林各族自治县","靖西市","平果市"],"贺州市":["八步区","平桂区","昭平县","钟山县","富川瑶族自治县"],"河池市":["金城江区","宜州区","南丹县","天峨县","凤山县","东兰县","罗城仫佬族自治县","环江毛南族自治县","巴马瑶族自治县","都安瑶族自治县","大化瑶族自治县"],"来宾市":["兴宾区","忻城县","象州县","武宣县","金秀瑶族自治县","合山市"],"崇左市":["江州区","扶绥县","宁明县","龙州县","大新县","天等县","凭祥市"]},"海南省":{"海口市":["秀英区","龙华区","琼山区","美兰区"],"三亚市":["海棠区","吉阳区","天涯区","崖州区"],"三沙市":["西沙群岛","南沙群岛","中沙群岛的岛礁及其海域"],"儋州市":["那大镇","和庆镇","南丰镇","大成镇","雅星镇","兰洋镇","光村镇","木棠镇","海头镇","峨蔓镇","王五镇","白马井镇","中和镇","排浦镇","东成镇","新州镇","洋浦经济开发区","华南热作学院"],"五指山市":[],"琼海市":[],"文昌市":[],"万宁市":[],"东方市":[],"定安县":[],"屯昌县":[],"澄迈县":[],"临高县":[],"白沙黎族自治县":[],"昌江黎族自治县":[],"乐东黎族自治县":[],"陵水黎族自治县":[],"保亭黎族苗族自治县":[],"琼中黎族苗族自治县":[]},"重庆市":{"重庆市":["万州区","涪陵区","渝中区","大渡口区","江北区","沙坪坝区","九龙坡区","南岸区","北碚区","綦江区","大足区","渝北区","巴南区","黔江区","长寿区","江津区","合川区","永川区","南川区","璧山区","铜梁区","潼南区","荣昌区","开州区","梁平区","武隆区","城口县","丰都县","垫江县","忠县","云阳县","奉节县","巫山县","巫溪县","石柱土家族自治县","秀山土家族苗族自治县","酉阳土家族苗族自治县","彭水苗族土家族自治县"]},"四川省":{"成都市":["锦江区","青羊区","金牛区","武侯区","成华区","龙泉驿区","青白江区","新都区","温江区","双流区","郫都区","新津区","金堂县","大邑县","蒲江县","都江堰市","彭州市","邛崃市","崇州市","简阳市"],"自贡市":["自流井区","贡井区","大安区","沿滩区","荣县","富顺县"],"攀枝花市":["东区","西区","仁和区","米易县","盐边县"],"泸州市":["江阳区","纳溪区","龙马潭区","泸县","合江县","叙永县","古蔺县"],"德阳市":["旌阳区","罗江区","中江县","广汉市","什邡市","绵竹市"],"绵阳市":["涪城区","游仙区","安州区","三台县","盐亭县","梓潼县","北川羌族自治县","平武县","江油市"],"广元市":["利州区","昭化区","朝天区","旺苍县","青川县","剑阁县","苍溪县"],"遂宁市":["船山区","安居区","蓬溪县","大英县","射洪市"],"内江市":["市中区","东兴区","威远县","资中县","隆昌市"],"乐山市":["市中区","沙湾区","五通桥区","金口河区","犍为县","井研县","夹江县","沐川县","峨边彝族自治县","马边彝族自治县","峨眉山市"],"南充市":["顺庆区","高坪区","嘉陵区","南部县","营山县","蓬安县","仪陇县","西充县","阆中市"],"眉山市":["东坡区","彭山区","仁寿县","洪雅县","丹棱县","青神县"],"宜宾市":["翠屏区","南溪区","叙州区","江安县","长宁县","高县","珙县","筠连县","兴文县","屏山县"],"广安市":["广安区","前锋区","岳池县","武胜县","邻水县","华蓥市"],"达州市":["通川区","达川区","宣汉县","开江县","大竹县","渠县","万源市"],"雅安市":["雨城区","名山区","荥经县","汉源县","石棉县","天全县","芦山县","宝兴县"],"巴中市":["巴州区","恩阳区","通江县","南江县","平昌县"],"资阳市":["雁江区","安岳县","乐至县"],"阿坝藏族羌族自治州":["马尔康市","汶川县","理县","茂县","松潘县","九寨沟县","金川县","小金县","黑水县","壤塘县","阿坝县","若尔盖县","红原县"],"甘孜藏族自治州":["康定市","泸定县","丹巴县","九龙县","雅江县","道孚县","炉霍县","甘孜县","新龙县","德格县","白玉县","石渠县","色达县","理塘县","巴塘县","乡城县","稻城县","得荣县"],"凉山彝族自治州":["西昌市","会理市","木里藏族自治县","盐源县","德昌县","会东县","宁南县","普格县","布拖县","金阳县","昭觉县","喜德县","冕宁县","越西县","甘洛县","美姑县","雷波县"]},"贵州省":{"贵阳市":["南明区","云岩区","花溪区","乌当区","白云区","观山湖区","开阳县","息烽县","修文县","清镇市"],"六盘水市":["钟山区","六枝特区","水城区","盘州市"],"遵义市":["红花岗区","汇川区","播州区","桐梓县","绥阳县","正安县","道真仡佬族苗族自治县","务川仡佬族苗族自治县","凤冈县","湄潭县","余庆县","习水县","赤水市","仁怀市"],"安顺市":["西秀区","平坝区","普定县","镇宁布依族苗族自治县","关岭布依族苗族自治县","紫云苗族布依族自治县"],"毕节市":["七星关区","大方县","金沙县","织金县","纳雍县","威宁彝族回族苗族自治县","赫章县","黔西市"],"铜仁市":["碧江区","万山区","江口县","玉屏侗族自治县","石阡县","思南县","印江土家族苗族自治县","德江县","沿河土家族自治县","松桃苗族自治县"],"黔西南布依族苗族自治州":["兴义市","兴仁市","普安县","晴隆县","贞丰县","望谟县","册亨县","安龙县"],"黔东南苗族侗族自治州":["凯里市","黄平县","施秉县","三穗县","镇远县","岑巩县","天柱县","锦屏县","剑河县","台江县","黎平县","榕江县","从江县","雷山县","麻江县","丹寨县"],"黔南布依族苗族自治州":["都匀市","福泉市","荔波县","贵定县","瓮安县","独山县","平塘县","罗甸县","长顺县","龙里县","惠水县","三都水族自治县"]},"云南省":{"昆明市":["五华区","盘龙区","官渡区","西山区","东川区","呈贡区","晋宁区","富民县","宜良县","石林彝族自治县","嵩明县","禄劝彝族苗族自治县","寻甸回族彝族自治县","安宁市"],"曲靖市":["麒麟区","沾益区","马龙区","陆良县","师宗县","罗平县","富源县","会泽县","宣威市"],"玉溪市":["红塔区","江川区","通海县","华宁县","易门县","峨山彝族自治县","新平彝族傣族自治县","元江哈尼族彝族傣族自治县","澄江市"],"保山市":["隆阳区","施甸县","龙陵县","昌宁县","腾冲市"],"昭通市":["昭阳区","鲁甸县","巧家县","盐津县","大关县","永善县","绥江县","镇雄县","彝良县","威信县","水富市"],"丽江市":["古城区","玉龙纳西族自治县","永胜县","华坪县","宁蒗彝族自治县"],"普洱市":["思茅区","宁洱哈尼族彝族自治县","墨江哈尼族自治县","景东彝族自治县","景谷傣族彝族自治县","镇沅彝族哈尼族拉祜族自治县","江城哈尼族彝族自治县","孟连傣族拉祜族佤族自治县","澜沧拉祜族自治县","西盟佤族自治县"],"临沧市":["临翔区","凤庆县","云县","永德县","镇康县","双江拉祜族佤族布朗族傣族自治县","耿马傣族佤族自治县","沧源佤族自治县"],"楚雄彝族自治州":["楚雄市","禄丰市","双柏县","牟定县","南华县","姚安县","大姚县","永仁县","元谋县","武定县"],"红河哈尼族彝族自治州":["个旧市","开远市","蒙自市","弥勒市","屏边苗族自治县","建水县","石屏县","泸西县","元阳县","红河县","金平苗族瑶族傣族自治县","绿春县","河口瑶族自治县"],"文山壮族苗族自治州":["文山市","砚山县","西畴县","麻栗坡县","马关县","丘北县","广南县","富宁县"],"西双版纳傣族自治州":["景洪市","勐海县","勐腊县"],"大理白族自治州":["大理市","漾濞彝族自治县","祥云县","宾川县","弥渡县","南涧彝族自治县","巍山彝族回族自治县","永平县","云龙县","洱源县","剑川县","鹤庆县"],"德宏傣族景颇族自治州":["瑞丽市","芒市","梁河县","盈江县","陇川县"],"怒江傈僳族自治州":["泸水市","福贡县","贡山独龙族怒族自治县","兰坪白族普米族自治县"],"迪庆藏族自治州":["香格里拉市","德钦县","维西傈僳族自治县"]},"西藏自治区":{"拉萨市":["城关区","堆龙德庆区","达孜区","林周县","当雄县","尼木县","曲水县","墨竹工卡县","格尔木藏青工业园区","拉萨经济技术开发区","西藏文化旅游创意园区","达孜工业园区"],"日喀则市":["桑珠孜区","南木林县","江孜县","定日县","萨迦县","拉孜县","昂仁县","谢通门县","白朗县","仁布县","康马县","定结县","仲巴县","亚东县","吉隆县","聂拉木县","萨嘎县","岗巴县"],"昌都市":["卡若区","江达县","贡觉县","类乌齐县","丁青县","察雅县","八宿县","左贡县","芒康县","洛隆县","边坝县"],"林芝市":["巴宜区","工布江达县","墨脱县","波密县","察隅县","朗县","米林市"],"山南市":["乃东区","扎囊县","贡嘎县","桑日县","琼结县","曲松县","措美县","洛扎县","加查县","隆子县","浪卡子县","错那市"],"那曲市":["色尼区","嘉黎县","比如县","聂荣县","安多县","申扎县","索县","班戈县","巴青县","尼玛县","双湖县"],"阿里地区":["普兰县","札达县","噶尔县","日土县","革吉县","改则县","措勤县"]},"陕西省":{"西安市":["新城区","碑林区","莲湖区","灞桥区","未央区","雁塔区","阎良区","临潼区","长安区","高陵区","鄠邑区","蓝田县","周至县"],"铜川市":["王益区","印台区","耀州区","宜君县"],"宝鸡市":["渭滨区","金台区","陈仓区","凤翔区","岐山县","扶风县","眉县","陇县","千阳县","麟游县","凤县","太白县"],"咸阳市":["秦都区","杨陵区","渭城区","三原县","泾阳县","乾县","礼泉县","永寿县","长武县","旬邑县","淳化县","武功县","兴平市","彬州市"],"渭南市":["临渭区","华州区","潼关县","大荔县","合阳县","澄城县","蒲城县","白水县","富平县","韩城市","华阴市"],"延安市":["宝塔区","安塞区","延长县","延川县","志丹县","吴起县","甘泉县","富县","洛川县","宜川县","黄龙县","黄陵县","子长市"],"汉中市":["汉台区","南郑区","城固县","洋县","西乡县","勉县","宁强县","略阳县","镇巴县","留坝县","佛坪县"],"榆林市":["榆阳区","横山区","府谷县","靖边县","定边县","绥德县","米脂县","佳县","吴堡县","清涧县","子洲县","神木市"],"安康市":["汉滨区","汉阴县","石泉县","宁陕县","紫阳县","岚皋县","平利县","镇坪县","白河县","旬阳市"],"商洛市":["商州区","洛南县","丹凤县","商南县","山阳县","镇安县","柞水县"]},"甘肃省":{"兰州市":["城关区","七里河区","西固区","安宁区","红古区","永登县","皋兰县","榆中县","兰州新区"],"嘉峪关市":["雄关街道","钢城街道","新城镇","峪泉镇","文殊镇"],"金昌市":["金川区","永昌县"],"白银市":["白银区","平川区","靖远县","会宁县","景泰县"],"天水市":["秦州区","麦积区","清水县","秦安县","甘谷县","武山县","张家川回族自治县"],"武威市":["凉州区","民勤县","古浪县","天祝藏族自治县"],"张掖市":["甘州区","肃南裕固族自治县","民乐县","临泽县","高台县","山丹县"],"平凉市":["崆峒区","泾川县","灵台县","崇信县","庄浪县","静宁县","华亭市"],"酒泉市":["肃州区","金塔县","瓜州县","肃北蒙古族自治县","阿克塞哈萨克族自治县","玉门市","敦煌市"],"庆阳市":["西峰区","庆城县","环县","华池县","合水县","正宁县","宁县","镇原县"],"定西市":["安定区","通渭县","陇西县","渭源县","临洮县","漳县","岷县"],"陇南市":["武都区","成县","文县","宕昌县","康县","西和县","礼县","徽县","两当县"],"临夏回族自治州":["临夏市","临夏县","康乐县","永靖县","广河县","和政县","东乡族自治县","积石山保安族东乡族撒拉族自治县"],"甘南藏族自治州":["合作市","临潭县","卓尼县","舟曲县","迭部县","玛曲县","碌曲县","夏河县"]},"青海省":{"西宁市":["城东区","城中区","城西区","城北区","湟中区","大通回族土族自治县","湟源县"],"海东市":["乐都区","平安区","民和回族土族自治县","互助土族自治县","化隆回族自治县","循化撒拉族自治县"],"海北藏族自治州":["门源回族自治县","祁连县","海晏县","刚察县"],"黄南藏族自治州":["同仁市","尖扎县","泽库县","河南蒙古族自治县"],"海南藏族自治州":["共和县","同德县","贵德县","兴海县","贵南县"],"果洛藏族自治州":["玛沁县","班玛县","甘德县","达日县","久治县","玛多县"],"玉树藏族自治州":["玉树市","杂多县","称多县","治多县","囊谦县","曲麻莱县"],"海西蒙古族藏族自治州":["格尔木市","德令哈市","茫崖市","乌兰县","都兰县","天峻县","大柴旦行政委员会"]},"宁夏回族自治区":{"银川市":["兴庆区","西夏区","金凤区","永宁县","贺兰县","灵武市"],"石嘴山市":["大武口区","惠农区","平罗县"],"吴忠市":["利通区","红寺堡区","盐池县","同心县","青铜峡市"],"固原市":["原州区","西吉县","隆德县","泾源县","彭阳县"],"中卫市":["沙坡头区","中宁县","海原县"]},"新疆维吾尔自治区":{"乌鲁木齐市":["天山区","沙依巴克区","新市区","水磨沟区","头屯河区","达坂城区","米东区","乌鲁木齐县"],"克拉玛依市":["独山子区","克拉玛依区","白碱滩区","乌尔禾区"],"吐鲁番市":["高昌区","鄯善县","托克逊县"],"哈密市":["伊州区","巴里坤哈萨克自治县","伊吾县"],"昌吉回族自治州":["昌吉市","阜康市","呼图壁县","玛纳斯县","奇台县","吉木萨尔县","木垒哈萨克自治县"],"博尔塔拉蒙古自治州":["博乐市","阿拉山口市","精河县","温泉县"],"巴音郭楞蒙古自治州":["库尔勒市","轮台县","尉犁县","若羌县","且末县","焉耆回族自治县","和静县","和硕县","博湖县"],"阿克苏地区":["阿克苏市","库车市","温宿县","沙雅县","新和县","拜城县","乌什县","阿瓦提县","柯坪县"],"克孜勒苏柯尔克孜自治州":["阿图什市","阿克陶县","阿合奇县","乌恰县"],"喀什地区":["喀什市","疏附县","疏勒县","英吉沙县","泽普县","莎车县","叶城县","麦盖提县","岳普湖县","伽师县","巴楚县","塔什库尔干塔吉克自治县"],"和田地区":["和田市","和田县","墨玉县","皮山县","洛浦县","策勒县","于田县","民丰县"],"伊犁哈萨克自治州":["伊宁市","奎屯市","霍尔果斯市","伊宁县","察布查尔锡伯自治县","霍城县","巩留县","新源县","昭苏县","特克斯县","尼勒克县"],"塔城地区":["塔城市","乌苏市","沙湾市","额敏县","托里县","裕民县","和布克赛尔蒙古自治县"],"阿勒泰地区":["阿勒泰市","布尔津县","富蕴县","福海县","哈巴河县","青河县","吉木乃县"],"石河子市":[],"阿拉尔市":[],"图木舒克市":[],"五家渠市":[],"北屯市":[],"铁门关市":[],"双河市":[],"可克达拉市":[],"昆玉市":[],"胡杨河市":[],"新星市":[],"白杨市":[]},"台湾省":{},"香港特别行政区":{},"澳门特别行政区":{}};
+
+function initRegions(){
+  var p = document.getElementById('regP');
+  if(!p) return;
+  p.innerHTML = '<option value="">省/自治区/直辖市</option>'
+    + Object.keys(REGIONS).map(function(x){ return '<option>'+esc(x)+'</option>'; }).join('');
+}
+function fillCity(){
+  var p = document.getElementById('regP').value;
+  var cs = p ? Object.keys(REGIONS[p]||{}) : [];
+  document.getElementById('regC').innerHTML = '<option value="">市/地区</option>'
+    + cs.map(function(x){ return '<option>'+esc(x)+'</option>'; }).join('');
+  fillDist();
+}
+function fillDist(){
+  var p = document.getElementById('regP').value, c = document.getElementById('regC').value;
+  var ds = (p && c) ? (REGIONS[p][c]||[]) : [];
+  document.getElementById('regD').innerHTML = '<option value="">区/县</option>'
+    + (p && c && !ds.length ? '<option value="">（该市无下级区划，可留空）</option>' : '')
+    + ds.map(function(x){ return '<option>'+esc(x)+'</option>'; }).join('');
+  saveRegion();
+}
+function regionText(){
+  return [document.getElementById('regP').value,
+          document.getElementById('regC').value,
+          document.getElementById('regD').value].filter(function(x){ return x; }).join(' / ');
+}
+function saveRegion(){ /* 区域变动时预留钩子 */ }
+
+function initTimeSelect(id){
+  var h = '<option value="">时间</option>';
+  for(var i=0;i<48;i++){
+    h += '<option>'+String(Math.floor(i/2)).padStart(2,'0')+':'+(i%2?'30':'00')+'</option>';
+  }
+  document.getElementById(id).innerHTML = h;
+}
+function initDuration(){
+  var h = '<option value="">请选择</option>';
+  for(var i=1;i<=48;i++){
+    var v = (i*0.5).toFixed(1);
+    h += '<option value="'+v+'">'+v+' 小时</option>';
+  }
+  document.getElementById('dDuration').innerHTML = h;
+}
+function setDT(dId, tId, dt){
+  var p = function(n){ return String(n).padStart(2,'0'); };
+  document.getElementById(dId).value = dt.getFullYear()+'-'+p(dt.getMonth()+1)+'-'+p(dt.getDate());
+  document.getElementById(tId).value = p(dt.getHours())+':'+(dt.getMinutes()<30?'00':'30');
+}
+function deriveTimes(){
+  var d = document.getElementById('dStartD').value, t = document.getElementById('dStartT').value;
+  if(!d || !t){ alert('请先选择评标开始时间的日期与时间。'); return; }
+  var base = new Date(d.replace(/-/g,'/')+' '+t);
+  if(isNaN(base.getTime())){ alert('评标开始时间无效。'); return; }
+  setDT('dCheckinD','dCheckinT', new Date(base.getTime()-30*60000));
+}
+
+function num(id){ var n = parseInt(document.getElementById(id).value,10); return isNaN(n)?0:n; }
+function tv(id){ var e=document.getElementById(id); return e?String(e.value||'').trim():''; }
+function dtText(dId,tId){ var d=tv(dId), t=tv(tId); return d ? (d + (t?' '+t:'')) : ''; }
+
+function calcCommittee(src){
+  var t=num('dTotal'), o=num('dOwnerRep'), e=num('dExpertNum');
+  if(src==='total' || src==='owner'){ e = Math.max(0, t-o); document.getElementById('dExpertNum').value = e; }
+  else { t = e+o; document.getElementById('dTotal').value = t; }
+  checkCommittee(t,o,e);
+}
+function checkCommittee(t,o,e){
+  var errs=[], warns=[];
+  if(t>0){
+    if(t<5) errs.push('评标委员会成员不得少于 5 人（《招标投标法》第三十七条）');
+    if(t%2===0) errs.push('评标委员会成员人数应为单数，当前 '+t+' 人为偶数');
+    var need=Math.ceil(t*2/3);
+    if(e<need) errs.push('专家人数不得少于成员总数的三分之二，'+t+' 人委员会至少需要 '+need+' 名专家，当前 '+e+' 名');
+    if(e+o!==t) warns.push('招标人代表 '+o+' 人 + 专家 '+e+' 人 = '+(o+e)+' 人，与委员总数 '+t+' 人不符');
+    var cs = composeSum(), iv = invitedCount();
+    if((cs+iv) && (cs+iv)!==e)
+      warns.push('下方「抽取专家组成」合计 '+cs+' 人 + 特邀专家 '+iv+' 人 = '+(cs+iv)+' 人，与抽取专家人数 '+e+' 人不符');
+  }
+  var box=document.getElementById('cmteHint');
+  if(!t){ box.innerHTML=''; return; }
+  var ul = function(a){ return a.length? '<ul>'+a.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>' : ''; };
+  box.innerHTML = errs.length
+    ? '<div class="chk bad"><strong>构成校验未通过</strong>'+ul(errs.concat(warns))+'</div>'
+    : '<div class="chk ok">构成校验通过：委员 '+t+' 人（招标人代表 '+o+' 人 + 专家 '+e+' 人），专家占比 '
+      + Math.round(e/t*100) + '%，法定下限 67%。'+ul(warns)+'</div>';
+}
+
+function readProj(){
+  return { code:tv('pCode'), name:tv('pName'), form:tv('pForm'), method:tv('pMethod'),
+           owner:tv('pOwner'), industry:tv('pIndustry'), contact:tv('pContact'),
+           contactTel:tv('pContactTel'), region:regionText() };
+}
+function readDrawInfo(){
+  return { org:tv('dOrg'), user:tv('dUser'), userTel:tv('dUserTel'), sup:tv('dSup'), supTel:tv('dSupTel'),
+           category:tv('dCategory'), total:num('dTotal'), ownerRep:num('dOwnerRep'),
+           expertNum:num('dExpertNum'),
+           /* 一次抽取只有一个评标室，地点与评标室在「抽取信息」统一填写，各分组共用 */
+           place:tv('dPlace'), room:tv('dRoom'),
+           startTime:dtText('dStartD','dStartT'),
+           checkinTime:dtText('dCheckinD','dCheckinT'),
+           duration:tv('dDuration') };
+}
+/* 记录的评标地点 / 评标室：新记录取自抽取信息，老记录可能分组各自有值 */
+function recPlace(r){ var d = rdInfo(r); return (d && d.place) || ''; }
+function recRoom(r){  var d = rdInfo(r); return (d && d.room)  || ''; }
+function groupPlace(r, g){ return (g && g.place) || recPlace(r); }
+function groupRoom(r, g){  return (g && g.room)  || recRoom(r);  }
+/* 兼容旧记录 */
+function rp(r){ return r.proj || { name:r.project||'', code:r.code||'' }; }
+function rdInfo(r){ return r.draw || { user:r.operator||'' }; }
+
+function projRows(r){
+  var p=rp(r), d=rdInfo(r), o=[];
+  o.push(['项目编号', p.code]);
+  o.push(['项目名称', p.name]);
+  if(p.form)      o.push(['组织形式', p.form]);
+  if(p.method)    o.push(['招标方式', p.method]);
+  if(p.owner)     o.push(['招标人机构', p.owner]);
+  if(p.industry)  o.push(['行业', p.industry]);
+  if(p.region)    o.push(['行政区域', p.region]);
+  if(p.contact)   o.push(['联系人', p.contact + (p.contactTel?' / '+p.contactTel:'')]);
+  if(d.org)       o.push(['所属机构', d.org]);
+  o.push(['抽取人', (d.user||'') + (d.userTel?' / '+d.userTel:'')]);
+  if(d.sup)       o.push(['监督人', d.sup + (d.supTel?' / '+d.supTel:'')]);
+  if(d.category)  o.push(['评标类别', d.category]);
+  if(d.total)     o.push(['评标委员会', d.total+' 人（招标人代表 '+(d.ownerRep||0)+' 人 + 专家 '+(d.expertNum||0)+' 人）']);
+  /* 评标地点 / 评标室：新记录在 draw 上，老记录可能散在各 group，取第一个有值的 */
+  var pl = d.place || (r && (r.groups||[]).filter(function(g){ return g && g.place; })[0] || {}).place || '';
+  var rm = d.room  || (r && (r.groups||[]).filter(function(g){ return g && g.room;  })[0] || {}).room  || '';
+  if(pl)          o.push(['评标地点', pl]);
+  if(rm)          o.push(['评标室', rm]);
+  if(d.startTime)  o.push(['评标开始时间', d.startTime]);
+  if(d.checkinTime)o.push(['专家报到时间', d.checkinTime]);
+  if(d.duration)   o.push(['评标时长', d.duration+' 小时']);
+  return o.filter(function(x){ return x[1]; });
+}
+function infoTable(r){
+  return '<dl class="kv">'
+    + projRows(r).map(function(x){ return '<dt>'+esc(x[0])+'</dt><dd>'+esc(x[1])+'</dd>'; }).join('')
+    + '</dl>';
+}
+
+/* ================= 抽取 ================= */
+function refreshDatalist(){
+  var all = experts();
+  var majors = {};
+  all.forEach(function(e){
+    [e.major1,e.major2].forEach(function(m){ if(m) majors[m]=1; });
+  });
+  var dl1 = document.getElementById('dlMajors');
+  if(dl1) dl1.innerHTML = Object.keys(majors).map(function(m){ return '<option value="'+esc(m)+'">'; }).join('');
+  var dl2 = document.getElementById('dlNames');
+  if(dl2) dl2.innerHTML = all.map(function(e){ return '<option value="'+esc(e.name)+'">'; }).join('');
+}
+
+/* ---------- 四张动态表的行管理 ---------- */
+var INDUSTRIES = ['','房屋建筑','市政公用','交通运输','水利水电','电力工程','通信工程','机电设备',
+  '信息技术','医疗卫生','教育装备','农林牧渔','能源化工','环境保护','文化旅游','金融服务','政府采购','其他'];
+var ROW_SEQ   = {compose:0, invited:0, org:0, expert:0};
+var ROW_BODY  = {compose:'bdCompose',  invited:'bdInvited',  org:'bdOrg',  expert:'bdExpert'};
+var ROW_EMPTY = {compose:'emCompose',  invited:'emInvited',  org:'emOrg',  expert:'emExpert'};
+var ROW_KINDS = ['compose','invited','org','expert'];
+
+function industryOptions(sel){
+  return INDUSTRIES.map(function(x){
+    return '<option value="'+esc(x)+'"'+(x===sel?' selected':'')+'>'+(x||'请选择')+'</option>';
+  }).join('');
+}
+function rowOps(kind){
+  /* 只在下方「+ 新增行」统一加行，行内不再提供「新增」，避免误点插行 */
+  return '<button class="btn sm dgr" onclick="delRow(\''+kind+'\',this)">删除</button>';
+}
+function rowHTML(kind, d){
+  var ops = '<td class="ops">'+rowOps(kind)+'</td>';
+  if(kind==='compose'){
+    return '<td class="idx"></td>'
+      + '<td><input type="text" data-f="major" list="dlMajors" value="'+esc(d.major||'')+'" placeholder="如：建筑工程"></td>'
+      + '<td><input type="text" data-f="altMajor" list="dlMajors" value="'+esc(d.altMajor||'')+'" placeholder="可补充匹配"></td>'
+      + '<td><select data-f="industry">'+industryOptions(d.industry)+'</select></td>'
+      + '<td><input type="number" data-f="count" min="1" step="1" value="'+(d.count||1)+'" oninput="syncChecks()"></td>'
+      + '<td><select data-f="status" onchange="styleStatus(this)">'
+        + '<option'+(d.status==='抽取成功'?'':' selected')+'>未抽取</option>'
+        + '<option'+(d.status==='抽取成功'?' selected':'')+'>抽取成功</option></select></td>'
+      + ops;
+  }
+  if(kind==='invited'){
+    return '<td class="idx"></td>'
+      + '<td><input type="text" data-f="name" list="dlNames" value="'+esc(d.name||'')+'" placeholder="姓名"'
+        + ' onchange="fillInvited(this)" onblur="fillInvited(this)"'
+        + ' title="从专家库中选择姓名后，自动带出专业 / 手机号 / 身份证号"></td>'
+      + '<td><input type="text" data-f="major" list="dlMajors" value="'+esc(d.major||'')+'" placeholder="专业"></td>'
+      + '<td><input type="text" data-f="phone" value="'+esc(d.phone||'')+'" placeholder="手机号"></td>'
+      + '<td><input type="text" data-f="idNo" value="'+esc(d.idNo||'')+'" placeholder="身份证号"></td>'
+      + '<td><input type="text" data-f="remark" value="'+esc(d.remark||'')+'" placeholder="备注"></td>'
+      + ops;
+  }
+  if(kind==='org'){
+    return '<td class="idx"></td>'
+      + '<td><input type="text" data-f="name" value="'+esc(d.name||'')+'" placeholder="投标人全称（比对专家所在单位）"></td>'
+      + '<td><input type="text" data-f="credit" value="'+esc(d.credit||'')+'" placeholder="统一社会信用代码"></td>'
+      + '<td><input type="text" data-f="reason" value="'+esc(d.reason||'')+'" placeholder="如：本项目投标人"></td>'
+      + ops;
+  }
+  return '<td class="idx"></td>'
+    + '<td><input type="text" data-f="name" list="dlNames" value="'+esc(d.name||'')+'" placeholder="姓名"></td>'
+    + '<td><input type="text" data-f="idNo" value="'+esc(d.idNo||'')+'" placeholder="证件号码"></td>'
+    + '<td><input type="text" data-f="reason" value="'+esc(d.reason||'')+'" placeholder="如：与投标人有利害关系"></td>'
+    + ops;
+}
+/* 特邀专家：选了库里的姓名就自动带出专业 / 手机号 / 身份证号。
+   库外专家（手输姓名）匹配不到时保持空白，不打扰。 */
+function fillInvited(el){
+  if(!el) return false;
+  var tr = el.parentNode.parentNode;
+  var name = String(el.value||'').trim();
+  if(!name) return false;
+  var set = function(f, v){
+    var t = tr.querySelector('[data-f="'+f+'"]');
+    if(t) t.value = v || '';
+  };
+  var hit = experts().filter(function(e){ return String(e.name||'').trim() === name; });
+
+  /* 换了姓名却匹配不到（库外专家，或同名无法判断）时，必须清掉上一人的专业/手机号/身份证号，
+     否则会留下别人的身份证号去参与回避比对，那是会出事的。 */
+  if(hit.length !== 1){
+    set('major',''); set('phone',''); set('idNo','');
+    if(hit.length > 1){
+      alert('专家库中有 ' + hit.length + ' 位同名专家「' + name + '」，无法自动判断是哪一位。\n\n'
+          + '已清空该行的专业 / 手机号 / 身份证号，请手工填写。\n'
+          + '（如需区分，建议在专家库里把姓名写成「张三（XX单位）」）');
+    }
+    return false;
+  }
+  var e = hit[0];
+  set('major', e.major2 || e.major1 || '');
+  set('phone', e.phone || '');
+  set('idNo',  e.idNo  || '');
+  syncChecks();
+  return true;
+}
+
+function styleStatus(sel){
+  if(!sel) return;
+  var on = sel.value === '抽取成功';
+  sel.style.color = on ? 'var(--green)' : 'var(--text3)';
+  sel.style.fontWeight = on ? '500' : '';
+}
+function addRow(kind, afterTr, data){
+  var tb = document.getElementById(ROW_BODY[kind]);
+  if(!tb) return null;
+  var tr = document.createElement('tr');
+  tr.id = kind + '_' + (++ROW_SEQ[kind]);
+  tr.innerHTML = rowHTML(kind, data||{});
+  /* 给行内控件标上所属哪张表：输入联想按「表 + 列」分开记历史，
+     否则「回避单位-名称」的历史会串到「特邀专家-姓名」的下拉里 */
+  (tr.querySelectorAll ? tr.querySelectorAll('[data-f]') : []).forEach(function(el){
+    if(el.setAttribute) el.setAttribute('data-k', kind);
+  });
+  if(afterTr && afterTr.parentNode === tb){
+    var kids = tb.children, at = kids.indexOf(afterTr);
+    if(at >= 0) tb.insertBefore(tr, kids[at+1] || null);
+    else tb.appendChild(tr);
+  } else tb.appendChild(tr);
+  renumber(kind);
+  syncChecks();
+  queueSaveForm();   /* 加行也算变更：否则刷新页面这一行就没了 */
+  return tr;
+}
+function delRow(kind, btn){
+  var tr = btn.parentNode.parentNode;
+  if(tr && tr.parentNode) tr.parentNode.removeChild(tr);
+  renumber(kind);
+  syncChecks();
+  queueSaveForm();
+}
+function renumber(kind){
+  var tb = document.getElementById(ROW_BODY[kind]);
+  if(!tb) return;
+  var trs = tb.getElementsByTagName('tr');
+  for(var i=0;i<trs.length;i++){
+    var c = trs[i].getElementsByClassName('idx')[0];
+    if(c) c.textContent = i+1;
+    var st = trs[i].getElementsByTagName('select');
+    if(st[1]) styleStatus(st[1]);
+    else if(st[0] && kind==='compose') styleStatus(st[0]);
+  }
+  var em = document.getElementById(ROW_EMPTY[kind]);
+  if(em) em.style.display = trs.length ? 'none' : '';
+}
+/* 读取一行的全部 data-f 控件 */
+function rowFields(tr){
+  var out = [], els = tr.getElementsByTagName('*');
+  for(var i=0;i<els.length;i++){
+    if(els[i].getAttribute && els[i].getAttribute('data-f')) out.push(els[i]);
+  }
+  return out;
+}
+function readRows(kind){
+  var out = [], tb = document.getElementById(ROW_BODY[kind]);
+  if(!tb) return out;
+  var trs = tb.getElementsByTagName('tr');
+  for(var i=0;i<trs.length;i++){
+    var o = {_seq: trs[i].id};
+    var fs = rowFields(trs[i]);
+    for(var j=0;j<fs.length;j++){
+      var k = fs[j].getAttribute('data-f'), v;
+      if(fs[j].tagName === 'SELECT') v = fs[j].value;
+      else if(k === 'count') v = parseInt(fs[j].value,10) || 0;
+      else v = String(fs[j].value||'').trim();
+      o[k] = v;
+    }
+    out.push(o);
+  }
+  return out;
+}
+function validRows(kind, arr){
+  return (arr||[]).filter(function(o){
+    if(kind === 'compose') return !!o.major && o.count > 0;
+    /* 回避专家：姓名或证件号码任一即可（两者独立参与比对） */
+    if(kind === 'expert')  return !!o.name || !!o.idNo;
+    return !!o.name;
+  });
+}
+function readCond(){
+  return {
+    compose:      validRows('compose', readRows('compose')),
+    invited:      validRows('invited', readRows('invited')),
+    avoidOrgs:    validRows('org',     readRows('org')),
+    avoidExperts: validRows('expert',  readRows('expert')),
+    sameOrg:      parseInt(document.getElementById('sameOrg').value,10)||0,
+    recentLimit:  parseInt(document.getElementById('recentLimit').value,10)||0,
+    backupRatio:  parseInt(document.getElementById('backupRatio').value,10)||0,
+    titleMin:     document.getElementById('titleMin').value
+  };
+}
+function composeSum(){ return validRows('compose', readRows('compose')).reduce(function(s,o){ return s+o.count; },0); }
+function invitedCount(){ return validRows('invited', readRows('invited')).length; }
+function renumberAll(){ ROW_KINDS.forEach(renumber); }
+function syncChecks(){
+  renumberAll();
+  var cs = composeSum(), iv = invitedCount();
+  var el = document.getElementById('composeSum');
+  if(el) el.textContent = '组成合计 ' + cs + ' 人' + (iv ? ' · 特邀 ' + iv + ' 人' : '');
+  checkCommittee(num('dTotal'), num('dOwnerRep'), num('dExpertNum'));
+}
+function clearCond(){
+  if(!confirm('清空全部抽取条件？包括四张表的内容及其他抽取设置。')) return;
+  ROW_KINDS.forEach(function(k){
+    var tb = document.getElementById(ROW_BODY[k]);
+    if(tb) tb.innerHTML = '';
+    renumber(k);
+  });
+  document.getElementById('sameOrg').value = 1;
+  document.getElementById('recentLimit').value = 0;
+  document.getElementById('backupRatio').value = '2';
+  document.getElementById('titleMin').value = '';
+  syncChecks();
+  queueSaveForm();   /* 清空也是一次状态变更，要落盘，否则刷新后旧的又回来了 */
+}
+
+/* ================= 填写记忆 =================
+   项目信息 / 抽取信息 / 其他抽取设置 / 四张子表 写 localStorage，
+   关掉浏览器、刷新页面、下次开机打开都原样回来。
+   注意：这是**本机会话级**数据，不进备份文件（备份用于跨电脑迁移，
+   把上一条项目的表单也带过去容易串台）。 */
+var K_F = 'extdraw.form.v1';
+var FORM_IDS = ['pCode','pName','pForm','pMethod','pOwner','pIndustry','pContact','pContactTel',
+  'dOrg','dUser','dUserTel','dSup','dSupTel','dCategory',
+  'dStartD','dStartT','dCheckinD','dCheckinT','dDuration',
+  'dPlace','dRoom','dTotal','dOwnerRep','dExpertNum',
+  'sameOrg','titleMin','backupRatio','recentLimit'];
+/* 省市区三个联动下拉单独处理：要靠 regP 现填 option，直接赋值会被丢掉 */
+var REG_IDS = ['regP','regC','regD'];
+
+function formState(){
+  var o = {v:1, at:nowStr(), ids:{}, reg:{}, rows:{}};
+  FORM_IDS.forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) o.ids[id] = el.value;
+  });
+  REG_IDS.forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) o.reg[id] = el.value;
+  });
+  ROW_KINDS.forEach(function(k){ o.rows[k] = readRows(k); });
+  return o;
+}
+
+function saveForm(){
+  try { localStorage.setItem(K_F, JSON.stringify(formState())); } catch(e){}
+}
+var SAVE_T = null;
+/* 输入很密的时候别每次按键都写一次磁盘 */
+function queueSaveForm(){
+  if(SAVE_T) clearTimeout(SAVE_T);
+  try { SAVE_T = setTimeout(saveForm, 300); } catch(e){ saveForm(); }
+}
+
+/* 返回 true 表示确实恢复出了内容（用于给提示） */
+function loadForm(){
+  var o = null;
+  try { o = JSON.parse(localStorage.getItem(K_F) || 'null'); } catch(e){ o = null; }
+  if(!o) return false;
+
+  var n = 0;
+  Object.keys(o.ids||{}).forEach(function(id){
+    var el = document.getElementById(id);
+    if(el && o.ids[id] != null){ el.value = o.ids[id]; n++; }
+  });
+  /* 区域：省 → 现填市 → 现填区，顺序错了下拉里没有对应项，赋值会被吞 */
+  var rp = document.getElementById('regP');
+  if(rp && o.reg && o.reg.regP){ rp.value = o.reg.regP; fillCity(); }
+  var rc = document.getElementById('regC');
+  if(rc && o.reg && o.reg.regC){ rc.value = o.reg.regC; fillDist(); }
+  var rd = document.getElementById('regD');
+  if(rd && o.reg && o.reg.regD){ rd.value = o.reg.regD; }
+
+  var anyRow = ROW_KINDS.some(function(k){ return (o.rows||{})[k] && o.rows[k].length; });
+  if(anyRow){
+    ROW_KINDS.forEach(function(k){
+      var tb = document.getElementById(ROW_BODY[k]);
+      if(!tb) return;
+      tb.innerHTML = ''; ROW_SEQ[k] = 0;
+      ((o.rows||{})[k]||[]).forEach(function(d){ if(d) addRow(k, null, d); });
+      renumber(k);
+      n += ((o.rows||{})[k]||[]).length;
+    });
+  }
+  syncChecks(); renumberAll();
+  /* 委员会人数是联动算出来的，这里直接用保存下来的三个值复核校验提示 */
+  var tp = document.getElementById('dTotal');
+  var ow = document.getElementById('dOwnerRep');
+  var en = document.getElementById('dExpertNum');
+  var tv = tp ? parseInt(tp.value,10) || 0 : 0;
+  var ov = ow ? parseInt(ow.value,10) || 0 : 0;
+  var ev = en ? parseInt(en.value,10) || 0 : 0;
+  if(tv || ov || ev) checkCommittee(tv, ov, ev);
+  return n > 0;
+}
+
+function clearForm(){
+  if(!confirm('清除两类记忆？\n\n1）自动回填的整份表单（项目信息 / 抽取信息 / 抽取条件四表）\n'
+    + '2）各输入框的历史候选值（点输入框弹出的下拉）\n\n只清这些，专家库和抽取记录不受影响。')) return;
+  try { localStorage.removeItem(K_F); localStorage.removeItem(K_H); } catch(e){}
+  alert('已清除填写记忆和输入历史候选。刷新页面后表单回到空白。');
+}
+
+/* ================= 输入联想（历史输入下拉） =================
+   点一下输入框，下方列出这个框以前填过的内容，直接点选即可，不用重打。
+   按框存历史：顶层字段按 id，四张子表里的字段按 data-f（同一列跨行共用，
+   比如「单位名称」在你加的每一行里都能选到以前填过的单位）。
+   这与上面的「整表单回填」是两回事：那个是恢复上次的整份表单，这个是单框历史值。 */
+var K_H = 'extdraw.hist.v1';
+var K_HS = 'extdraw.histseeded.v1';   /* 播种标记，避免清完又自动灌回来 */
+var HIST_MAX = 20;      /* 每个框最多留 20 条 */
+var SUG_MAX  = 8;       /* 下拉最多显示 8 条 */
+
+function histAll(){
+  try { return JSON.parse(localStorage.getItem(K_H) || '{}') || {}; } catch(e){ return {}; }
+}
+function histSet(o){ try { localStorage.setItem(K_H, JSON.stringify(o)); } catch(e){} }
+
+/* 取值键：优先「所属表 + 列名」，否则按元素 id。
+   表内的列必须带上表名 —— 四张表里都有 data-f="name"，含义各不相同。 */
+function histKey(el){
+  if(!el || !el.getAttribute) return '';
+  var f = el.getAttribute('data-f');
+  if(f){
+    var k = el.getAttribute('data-k');
+    return k ? ('r:' + k + ':' + f) : ('f:' + f);
+  }
+  /* 只给文本框攒历史：下拉框（select）本来就只有固定选项，不需要联想 */
+  var tg = String(el.tagName);
+  if(tg === 'SELECT' || tg === 'TEXTAREA') return '';
+  if(tg === 'INPUT' && (el.type || 'text') !== 'text') return '';
+  return el.id ? ('id:' + el.id) : '';
+}
+function histOf(key){ return histAll()[key] || []; }
+
+/* 把这个框当前的值记进历史（去重、最新的排最前） */
+function histPush(el){
+  var k = histKey(el);
+  if(!k || k === 'id:') return;
+  var v = String(el.value == null ? '' : el.value).trim();
+  if(!v) return;
+  var o = histAll(), arr = (o[k] || []).filter(function(x){ return x !== v; });
+  arr.unshift(v);
+  o[k] = arr.slice(0, HIST_MAX);
+  histSet(o);
+}
+
+/* 第一次装这个功能时下拉是空的，从已有抽取记录里把历史值捞出来填进去，
+   这样一装上就能选到以前用过的招标人、评标地点、回避单位…
+   只补空的历史（不覆盖已经攒到的），也不记手机号这类敏感值。 */
+function seedHist(){
+  /* 只播种一次：清过历史之后不再自动灌回来，否则「清除」看着没生效 */
+  try { if(localStorage.getItem(K_HS)) return false; } catch(e){}
+  var o = histAll(), changed = false;
+  var put = function(k, v){
+    v = String(v == null ? '' : v).trim();
+    if(!v || v.length < 2) return;
+    var arr = o[k] || [];
+    if(arr.indexOf(v) >= 0){ return; }
+    arr.unshift(v);
+    o[k] = arr.slice(0, HIST_MAX);
+    changed = true;
+  };
+  records().forEach(function(r){
+    var p = rp(r), d = rdInfo(r), cc = condOf(r);
+    put('id:pOwner', p.owner);
+    put('id:pIndustry', p.industry);
+    put('id:pContact', p.contact);
+    put('id:dOrg', d.org);
+    put('id:dUser', d.user);
+    put('id:dSup', d.sup);
+    put('id:dPlace', d.place);
+    put('id:dRoom', d.room);
+    (cc.compose || []).forEach(function(x){ put('r:compose:major', x.major); });
+    (cc.invited || []).forEach(function(x){ put('r:invited:name', x.name); put('r:invited:major', x.major); });
+    (cc.avoidOrgs || []).forEach(function(x){ put('r:org:name', x.name); });
+    (cc.avoidExperts || []).forEach(function(x){ put('r:expert:name', x.name); });
+  });
+  if(changed) histSet(o);
+  try { localStorage.setItem(K_HS, '1'); } catch(e){}
+  return changed;
+}
+
+/* 候选列表：按已输入内容做包含匹配，最多 SUG_MAX 条 */
+function sugItems(el){
+  var k = histKey(el);
+  if(!k || k === 'id:') return [];
+  var q = String(el.value == null ? '' : el.value).trim().toLowerCase();
+  var arr = histOf(k);
+  if(q) arr = arr.filter(function(x){ return String(x).toLowerCase().indexOf(q) >= 0; });
+  return arr.slice(0, SUG_MAX);
+}
+
+/* ---------- 下拉面板 ---------- */
+/* 面板自己缓存，不用反复 getElementById：这个节点是运行时建的，
+   有些环境（含测试桩）查不到 id 会抛错而不是返回 null */
+var SUG_BOX = null;
+function sugBox(){
+  if(SUG_BOX) return SUG_BOX;
+  var b = document.createElement('div');
+  b.id = 'sugBox';
+  b.style.cssText = 'position:absolute;z-index:999;display:none;background:var(--panel);'
+    + 'border:1px solid var(--line2);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.12);'
+    + 'max-height:216px;overflow:auto;font-size:13px;min-width:140px';
+  /* 用 mousedown 而不是 click：click 会在 blur 之后才触发，那时面板已经收起了 */
+  b.addEventListener('mousedown', function(ev){
+    var el = ev.target;
+    if(!el || !el.getAttribute) return;
+    var v = el.getAttribute('data-v'), t = SUG_TARGET;
+    if(v != null && t){
+      ev.preventDefault();
+      t.value = v;
+      closeSug();
+      queueSaveForm();
+      if(t.focus) t.focus();
+    }
+  });
+  (document.body || document.documentElement).appendChild(b);
+  SUG_BOX = b;
+  return b;
+}
+var SUG_TARGET = null, SUG_SEL = -1;
+function closeSug(){
+  if(SUG_BOX) SUG_BOX.style.display = 'none';
+  SUG_TARGET = null; SUG_SEL = -1;
+}
+function renderSug(el){
+  var items = sugItems(el);
+  if(!items.length){ closeSug(); return false; }
+  var b = sugBox();
+  b.innerHTML = items.map(function(v, i){
+    return '<div data-v="' + esc(v) + '" style="padding:6px 10px;cursor:pointer;'
+      + (i === SUG_SEL ? 'background:#E6F1FB;' : '') + 'white-space:nowrap;overflow:hidden;'
+      + 'text-overflow:ellipsis">' + esc(v) + '</div>';
+  }).join('');
+  b.style.display = 'block';
+  /* 面板跟随输入框：用视口坐标 + 页面滚动量 */
+  var r = el.getBoundingClientRect ? el.getBoundingClientRect() : null;
+  if(r){
+    var sy = (typeof window !== 'undefined' && window.pageYOffset) || 0;
+    var sx = (typeof window !== 'undefined' && window.pageXOffset) || 0;
+    b.style.left = (r.left + sx) + 'px';
+    b.style.top  = (r.bottom + sy + 2) + 'px';
+    b.style.minWidth = Math.max(140, r.width) + 'px';
+  }
+  return true;
+}
+function openSug(el){
+  if(!el || String(el.tagName) !== 'INPUT') { closeSug(); return; }
+  if((el.type || 'text') !== 'text') { closeSug(); return; }
+  if(!histKey(el) || histKey(el) === 'id:') { closeSug(); return; }
+  SUG_TARGET = el; SUG_SEL = -1;
+  renderSug(el);
+}
+/* 键盘：上下选、回车选中、Esc 关闭 */
+function sugKey(el, ev){
+  var items = sugItems(el);
+  if(!items.length) return false;
+  var k = ev.key;
+  if(k === 'ArrowDown'){ SUG_SEL = (SUG_SEL + 1) % items.length; renderSug(el); return true; }
+  if(k === 'ArrowUp'){ SUG_SEL = (SUG_SEL - 1 + items.length) % items.length; renderSug(el); return true; }
+  if(k === 'Enter'){
+    if(SUG_SEL >= 0){ el.value = items[SUG_SEL]; queueSaveForm(); }
+    closeSug();
+    return true;
+  }
+  if(k === 'Escape'){ closeSug(); return true; }
+  return false;
+}
+/* 兼容旧版记录结构 */
+function condOf(r){
+  var c = (r && r.cond) || {};
+  if(c.compose || c.invited || c.avoidOrgs || c.avoidExperts){
+    return {
+      compose:      c.compose      || [],
+      invited:      c.invited      || [],
+      avoidOrgs:    c.avoidOrgs    || [],
+      avoidExperts: c.avoidExperts || [],
+      sameOrg:      c.sameOrg      || 0,
+      recentLimit:  c.recentLimit  || 0,
+      backupRatio:  c.backupRatio  || 0,
+      titleMin:     c.titleMin     || '不限'
+    };
+  }
+  return {
+    compose: (c.reqs||[]).map(function(q){
+      return {room:'', major:q.major, altMajor:'', industry:'', count:q.count, place:'', status:'抽取成功'};
+    }),
+    invited: [],
+    avoidOrgs:    (c.avoidOrg||[]).map(function(s){  return {name:s, credit:'', reason:''}; }),
+    avoidExperts: (c.avoidName||[]).map(function(s){ return {name:s, idNo:'',   reason:''}; }),
+    sameOrg:      c.sameOrg||0,
+    recentLimit:  c.recentLimit||0,
+    backupRatio:  c.backupRatio||0,
+    titleMin:     c.titleMin||'不限'
+  };
+}
+/* 记录留痕用的专家快照 */
+function snap(e){
+  return { id:e.id, name:e.name, org:e.org, title:e.title, phone:e.phone,
+           city:e.city, major:(e.major1||'')+(e.major2?'/'+e.major2:'') };
+}
+function matchMajor(e, key){
+  var k = String(key||'').toLowerCase();
+  if(!k) return false;
+  return [e.major1,e.major2].join(' ').toLowerCase().indexOf(k)>=0;
+}
+
+/* 计算候选池 + 排除明细 */
+function buildPool(){
+  var c = readCond();
+  var all = experts();
+  var recs = records();
+  var excluded = [];
+  var pool = [];
+
+  var orgNames = c.avoidOrgs.map(function(o){ return o.name; });
+  var expNames = c.avoidExperts.map(function(o){ return o.name; });
+  var expIds   = c.avoidExperts.map(function(o){ return o.idNo; }).filter(function(s){ return s; });
+  var invNames = c.invited.map(function(o){ return o.name; });
+  var invIds   = c.invited.map(function(o){ return o.idNo; }).filter(function(s){ return s; });
+
+  /* 近期抽取次数统计 */
+  var recentCount = {};
+  if(c.recentLimit>0){
+    var since = Date.now() - c.recentLimit*86400000;
+    recs.forEach(function(r){
+      if(new Date(String(r.at).replace(/-/g,'/')).getTime() < since) return;
+      (r.picks||[]).forEach(function(p){
+        if(p.role==='正选') recentCount[p.id] = (recentCount[p.id]||0)+1;
+      });
+    });
+  }
+
+  all.forEach(function(e){
+    var why = [];
+    if((e.status||'在库')!=='在库') why.push('状态为「'+(e.status||'在库')+'」，不在库');
+
+    /* 特邀专家不参与随机抽取 */
+    var hitInv = invNames.filter(function(n){ return n && e.name && e.name.indexOf(n)>=0; });
+    if(hitInv.length) why.push('已登记为特邀专家，不参与随机抽取');
+    else if(invIds.length && e.idNo && invIds.indexOf(e.idNo)>=0) why.push('已登记为特邀专家（证件号匹配），不参与随机抽取');
+
+    /* 回避专家 */
+    var hitExp = expNames.filter(function(n){ return n && e.name && e.name.indexOf(n)>=0; });
+    if(hitExp.length) why.push('命中回避专家：'+hitExp.join('、'));
+    if(expIds.length && e.idNo && expIds.indexOf(e.idNo)>=0) why.push('回避专家证件号码匹配');
+
+    /* 回避单位：仅比对专家「所在单位」 */
+    var hitOrg = orgNames.filter(function(o){ return o && (e.org||'').indexOf(o)>=0; });
+    if(hitOrg.length) why.push('命中回避单位（所在单位）：'+hitOrg.join('、'));
+
+    if(c.titleMin){
+      var ti = TITLES.indexOf(e.title);
+      var mi = TITLES.indexOf(c.titleMin);
+      if(ti<0 || ti>mi) why.push('职称未达门槛（'+(e.title||'未填写')+'）');
+    }
+
+    /* 匹配抽取专家组成（评标专业 / 临评专业） */
+    var hit = null;
+    for(var i=0;i<c.compose.length;i++){
+      var q = c.compose[i];
+      if(matchMajor(e, q.major) || matchMajor(e, q.altMajor)){ hit = q._seq; break; }
+    }
+    if(!hit && c.compose.length) why.push('评标专业 / 临评专业不匹配任何抽取需求');
+
+    if(c.recentLimit>0 && (recentCount[e.id]||0) >= c.recentLimit){
+      why.push('近期已被抽为正选 '+(recentCount[e.id])+' 次，达上限');
+    }
+
+    if(why.length) excluded.push({id:e.id, name:e.name, org:e.org, reasons:why});
+    else if(hit) pool.push({e:e, seq:hit});
+  });
+
+  return {cond:c, pool:pool, excluded:excluded};
+}
+
+function previewPool(){
+  var r = buildPool();
+  if(!r.cond.compose.length){
+    document.getElementById('drawMsg').innerHTML =
+      '<div class="notice w">请先在「一、抽取专家组成」中至少填写一行（评标专业 + 人数）。</div>';
+    document.getElementById('poolInfo').textContent = '';
+    return;
+  }
+  var bySeq = {};
+  r.pool.forEach(function(p){ bySeq[p.seq] = (bySeq[p.seq]||0)+1; });
+  var warn = false;
+  var lines = r.cond.compose.map(function(q, i){
+    var n = bySeq[q._seq]||0;
+    var ok = n >= q.count;
+    if(!ok) warn = true;
+    var label = (q.room ? q.room+' / ' : '') + q.major + (q.altMajor ? '（临评：'+q.altMajor+'）' : '');
+    return (ok?'':'⚠ ') + '第'+(i+1)+'行 '+esc(label)+'：候选 '+n+' 人 / 需 '+q.count+' 人';
+  });
+  if(r.cond.invited.length) lines.push('特邀专家 '+r.cond.invited.length+' 人：直接登记，不参与随机抽取');
+  document.getElementById('poolInfo').textContent = '候选池共 '+r.pool.length+' 人，已排除 '+r.excluded.length+' 人';
+  document.getElementById('drawMsg').innerHTML =
+    '<div class="notice '+(warn?'w':'i')+'">'+lines.join('<br>')
+    + (warn?'<br><br>候选人数不足的行，抽取后结果会留空并记入抽取记录，请考虑放宽条件（如降低职称门槛、补充临评专业）或补充专家入库。':'')
+    + '</div>';
+}
+
+/* 按条件抽取：返回正选与备选（有序） */
+function pickFor(poolArr, cond, used, orgCount){
+  var seq = shuffle(poolArr);
+  var picked = [];
+  for(var i=0;i<seq.length;i++){
+    var e = seq[i].e;
+    if(used[e.id]) continue;
+    var org = (e.org||'').trim();
+    if(cond.sameOrg>0 && org && (orgCount[org]||0) >= cond.sameOrg) continue;
+    picked.push({e:e, major:seq[i].major});
+    if(org) orgCount[org] = (orgCount[org]||0)+1;
+  }
+  return picked;
+}
+
+function runDraw(){
+  var proj = readProj(), di = readDrawInfo();
+  var miss = [];
+  if(!proj.code)   miss.push('项目编号');
+  if(!proj.name)   miss.push('项目名称');
+  if(!di.user)     miss.push('抽取人姓名');
+  if(!di.userTel)  miss.push('抽取人手机号码');
+  if(!di.total)    miss.push('评标委员人数');
+  if(!di.expertNum)miss.push('抽取专家人数');
+  if(miss.length){ alert('请先填写以下必填项：\n\n· ' + miss.join('\n· ')); return; }
+
+  var badTel = checkAllTel();
+  if(badTel.length){
+    alert('以下电话号码不是有效的 11 位手机号（需 1 开头共 11 位）：\n\n· ' + badTel.join('\n· '));
+    return;
+  }
+
+  var rc = readCond();
+  if(!rc.compose.length){ alert('请先在「一、抽取专家组成」中至少填写一行（评标专业 + 人数）'); return; }
+
+  var cs = rc.compose.reduce(function(s,q){ return s+q.count; },0);
+  var iv = rc.invited.length;
+  if(cs + iv !== di.expertNum){
+    if(!confirm('「抽取专家组成」合计 '+cs+' 人 + 特邀专家 '+iv+' 人 = '+(cs+iv)+' 人，与「抽取专家人数」'+di.expertNum+' 人不一致。\n\n确定仍按当前组成执行抽取吗？')) return;
+  }
+
+  var r = buildPool();
+  var used = {}, orgCount = {};
+  var groups = [], allPicks = [], shortfall = [], drawnOk = {};
+
+  /* 一次抽取只有一个评标室：地点与评标室取自「抽取信息」，全部分组共用 */
+  var vPlace = di.place || '', vRoom = di.room || '';
+
+  r.cond.compose.forEach(function(q){
+    var sub = r.pool.filter(function(p){ return p.seq === q._seq; });
+    var need = q.count + q.count * r.cond.backupRatio;
+    var picked = pickFor(sub, r.cond, used, orgCount).slice(0, need);
+    picked.forEach(function(p){ used[p.e.id] = 1; });
+
+    var main = picked.slice(0, q.count);
+    var bak  = picked.slice(q.count);
+    drawnOk[q._seq] = main.length === q.count;
+    if(main.length < q.count){
+      shortfall.push((vRoom? vRoom+' / ' : '') + q.major + '：需 ' + q.count + ' 人，实抽 ' + main.length + ' 人');
+    }
+
+    var g = { seq:q._seq, room:vRoom, major:q.major, altMajor:q.altMajor, industry:q.industry,
+              count:q.count, place:vPlace,
+              main:main.map(function(p){ return snap(p.e); }),
+              backup:bak.map(function(p){ return snap(p.e); }) };
+    groups.push(g);
+    g.main.forEach(function(e){ allPicks.push({role:'正选', id:e.id, name:e.name, org:e.org, major:q.major, room:vRoom}); });
+    g.backup.forEach(function(e){ allPicks.push({role:'备选', id:e.id, name:e.name, org:e.org, major:q.major, room:vRoom}); });
+  });
+
+  /* 特邀专家：直接登记，不参与随机抽取 */
+  var invited = r.cond.invited.map(function(o, i){
+    var inLib = experts().filter(function(e){ return e.name === o.name; })[0] || null;
+    return { idx:i+1, id: inLib ? inLib.id : ('TY'+String(i+1).padStart(3,'0')),
+             name:o.name, major:o.major, phone:o.phone, idNo:o.idNo,
+             place:o.place || vPlace, remark:o.remark,
+             org: inLib ? inLib.org : '', title: inLib ? inLib.title : '', inLib: !!inLib };
+  });
+  invited.forEach(function(o){
+    allPicks.push({role:'特邀', id:o.id, name:o.name, org:o.org, major:o.major, room:o.place||''});
+  });
+
+  var rec = {
+    rid: 'DR' + Date.now().toString(36).toUpperCase(),
+    at: nowStr(),
+    kind: 'draw',
+    project: proj.name,
+    code: proj.code,
+    operator: di.user,
+    proj: proj,
+    draw: di,
+    cond: {
+      compose: r.cond.compose.map(function(q){
+        return { major:q.major, altMajor:q.altMajor, industry:q.industry,
+                 count:q.count, status: drawnOk[q._seq] ? '抽取成功' : '未抽取' };
+      }),
+      invited:      r.cond.invited,
+      avoidOrgs:    r.cond.avoidOrgs,
+      avoidExperts: r.cond.avoidExperts,
+      sameOrg:      r.cond.sameOrg,
+      recentLimit:  r.cond.recentLimit,
+      backupRatio:  r.cond.backupRatio,
+      titleMin:     r.cond.titleMin || '不限'
+    },
+    invited: invited,
+    poolSize: r.pool.length,
+    poolHash: hashStr(r.pool.map(function(p){return p.e.id;}).join('|')),
+    poolIds: r.pool.map(function(p){return p.e.id;}),
+    excluded: r.excluded,
+    groups: groups,
+    picks: allPicks,
+    shortfall: shortfall,
+    attend: {},
+    absent: [],
+    redraws: [],
+    randomSource: 'Web Crypto API (crypto.getRandomValues) · Fisher-Yates · 无偏取模'
+  };
+
+  var rs = records(); rs.unshift(rec); setRecords(rs);
+  markComposeStatus(drawnOk);
+  refreshRedrawSrc();
+  renderResult(rec);
+}
+
+/* 抽取后回写「抽取状态」列 */
+function markComposeStatus(drawnOk){
+  var tb = document.getElementById('bdCompose');
+  if(!tb) return;
+  var trs = tb.getElementsByTagName('tr');
+  for(var i=0;i<trs.length;i++){
+    var st = trs[i].getElementsByTagName('select')[1];
+    if(!st) continue;
+    st.value = drawnOk[trs[i].id] ? '抽取成功' : '未抽取';
+    styleStatus(st);
+  }
+}
+
+/* 抽取条件四张表的只读展示（详情 / 打印共用） */
+/* dropSetting：打印版不输出「同单位上限 / 备选比例 / 职称门槛 / 近期正选次数上限」这一行
+   （屏幕上查看详情仍保留，归档文档不需要这些内部口径） */
+function condTablesHTML(c, dropSetting){
+  var tb = function(head, rows){
+    var s = '<table><thead><tr>' + head.map(function(x){ return '<th>'+esc(x)+'</th>'; }).join('') + '</tr></thead><tbody>';
+    if(!rows.length) s += '<tr><td colspan="'+head.length+'" style="color:var(--text3)">无</td></tr>';
+    rows.forEach(function(r){
+      s += '<tr>' + r.map(function(x){ return '<td>'+esc(x==null||x===''?'-':x)+'</td>'; }).join('') + '</tr>';
+    });
+    return s + '</tbody></table>';
+  };
+  var h = '';
+  h += '<div style="font-size:13px;font-weight:500;margin:12px 0 5px">一、抽取专家组成</div>'
+     + tb(['序号','评标专业','临评专业','行业','人数','抽取状态'],
+          c.compose.map(function(o,i){ return [i+1,o.major,o.altMajor,o.industry,o.count,o.status||'未抽取']; }));
+  h += '<div style="font-size:13px;font-weight:500;margin:12px 0 5px">二、特邀专家</div>'
+     + tb(['序号','姓名','专业','手机号','身份证','备注'],
+          c.invited.map(function(o,i){ return [i+1,o.name,o.major,o.phone,o.idNo,o.remark]; }));
+  h += '<div style="font-size:13px;font-weight:500;margin:12px 0 5px">三、回避单位信息</div>'
+     + tb(['序号','单位名称','统一社会信用代码','回避原因'],
+          c.avoidOrgs.map(function(o,i){ return [i+1,o.name,o.credit,o.reason]; }));
+  h += '<div style="font-size:13px;font-weight:500;margin:12px 0 5px">四、回避专家信息</div>'
+     + tb(['序号','回避专家姓名','回避专家证件号码','回避原因'],
+          c.avoidExperts.map(function(o,i){ return [i+1,o.name,o.idNo,o.reason]; }));
+  if(!dropSetting){
+    h += '<div style="font-size:12px;color:var(--text3);margin-top:8px">同单位上限：'
+       + (c.sameOrg>0 ? c.sameOrg+' 人' : '不限制')
+       + ' · 备选比例：1:' + (c.backupRatio||0)
+       + ' · 职称门槛：' + esc(c.titleMin)
+       + ' · 近期正选次数上限：' + (c.recentLimit>0 ? c.recentLimit+' 次' : '不限制') + '</div>';
+  }
+  return h;
+}
+
+/* ================= 参会确认 ================= */
+/* rec.attend = { 专家id : 'yes' 参加 / 'no' 不参加 }，缺省为待确认 */
+function jsq(s){ return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+function attendOf(r){ return r.attend || {}; }
+function attVal(r, eid){ return attendOf(r)[eid] || ''; }
+function attText(v){ return v==='yes' ? '参加' : (v==='no' ? '不参加' : '待确认'); }
+/* 不参加原因：rec.attendNote = { 专家id : 原因 }，标记「不参加」时必填 */
+function attNoteOf(r){ return r.attendNote || {}; }
+function attNote(r, eid){ return attNoteOf(r)[eid] || ''; }
+/* 找专家姓名，用于 prompt 文案 */
+function expertNameIn(r, eid){
+  var n = '';
+  (r.groups||[]).forEach(function(g){
+    (g.main||[]).concat(g.backup||[]).forEach(function(e){ if(e && e.id === eid) n = e.name; });
+  });
+  (r.invited||[]).forEach(function(o){ if(o.id === eid) n = o.name; });
+  (r.incoming||[]).forEach(function(x){ if(x && x.expert && x.expert.id === eid) n = x.expert.name; });
+  return n || '该专家';
+}
+/* 换一个说法问原因，返回 null/空串表示放弃 */
+function askAbsentReason(r, eid){
+  var why = prompt('请填写「' + expertNameIn(r, eid) + '」不参加的原因：\n（如：出差在外、身体不适、与投标人有利害关系…）',
+                   attNote(r, eid));
+  return String(why == null ? '' : why).trim();
+}
+
+/* 判断某专家是否属于特邀（特邀不占随机抽取名额，不受人数上限约束） */
+function isInvitedId(rec, eid){
+  return (rec.invited||[]).some(function(o){ return o.id === eid; });
+}
+/* 已经「上位」的备选：原本只是后备，被某次补抽递补进委员会后就算占名额的人了。
+   他们再来不了是要补人的，不能还按「备选退出」处理。 */
+function promotedIds(rid){
+  var out = {};
+  records().forEach(function(x){
+    if(x.parent !== rid) return;
+    (x.incoming||[]).forEach(function(it){ if(it && it.expert) out[it.expert.id] = 1; });
+  });
+  return out;
+}
+/* 合并原记录与历次补抽记录的参会状态。
+   递补进来的人是在补抽结果里点的「参加 / 不参加」，记在补抽记录上，
+   原记录的 attend 里没有他们。只读原记录会把这部分状态漏掉。 */
+function mergedAttend(rid){
+  var r = findRec(rid); if(!r) return {};
+  var out = {}, own = attendOf(r);
+  Object.keys(own).forEach(function(k){ out[k] = own[k]; });
+  records().forEach(function(x){
+    if(x.parent !== rid) return;
+    var xa = attendOf(x);
+    (x.incoming||[]).forEach(function(it){
+      if(it && it.expert && xa[it.expert.id]) out[it.expert.id] = xa[it.expert.id];
+    });
+  });
+  return out;
+}
+/* 把「本次勾选的缺席者」临时并入缺席名单，再看项目还空着几个位置。
+   补抽人数取决于缺额，不取决于勾了几个人——
+   勾了 4 位正选 + 5 位备选，若已有 1 位正选和 1 位备选参加，只需补 3 人。 */
+function statWithAbsent(r, absentIds){
+  var tmp = { rid:r.rid, kind:r.kind, parent:r.parent, groups:r.groups,
+              picks:r.picks, attend:r.attend, absent:(r.absent||[]).slice() };
+  Object.keys(absentIds||{}).forEach(function(id){
+    var has = false;
+    for(var i=0;i<tmp.absent.length;i++){ if(tmp.absent[i] && tmp.absent[i].id === id){ has = true; break; } }
+    if(!has) tmp.absent.push({id:id, by:'TMP'});
+  });
+  return recAttStat(tmp);
+}
+/* 参会人数上限依据哪条记录：补抽记录服务于其原记录，上限看原记录 */
+function capRecOf(rec){
+  if(rec.kind === 'redraw' && rec.parent){
+    var rs = records();
+    for(var i=0;i<rs.length;i++){ if(rs[i].rid === rec.parent) return rs[i]; }
+  }
+  return rec;
+}
+
+function setAttend(rid, eid, val){
+  var rs = records(), r = null;
+  for(var i=0;i<rs.length;i++){ if(rs[i].rid === rid){ r = rs[i]; break; } }
+  if(!r) return;
+  if(!r.attend) r.attend = {};
+
+  /* 上限：已确认参加人数不得大于需求人数（特邀专家不计入随机抽取名额） */
+  if(val === 'yes' && r.attend[eid] !== 'yes' && !isInvitedId(r, eid)){
+    var capRec = capRecOf(r);
+    /* 已经让出名额的人不能再算参加：他已在某张补抽单上被登记为缺席，
+       再标「参加」会让统计自相矛盾（缺席名单数他一份，参加人数也数他一份）。 */
+    if((capRec.absent||[]).some(function(a){ return a.id === eid; })){
+      alert('这位专家已被登记为缺席，不能再标记「参加」。\n\n'
+          + '他缺席的位置已由后续补抽的人顶上，两边都算就会出现超员。\n'
+          + '如果是误登记，请在「抽取记录」中删除对应的补抽记录后重新操作。');
+      return;
+    }
+    var cap = recAttStat(capRec);
+    if(cap.need > 0 && cap.yes >= cap.need){
+      alert('已确认参加 '+cap.yes+' 人，已达到需求人数 '+cap.need+' 人，不能再标记「参加」。\n\n'
+          + '如果确实要换人：请先把已参加的某位专家点回「待确认」，再标记这一位。\n'
+          + '（特邀专家是甲方指定的，不占随机抽取名额，不受此限制）');
+      return;
+    }
+  }
+
+  var cur = r.attend[eid];
+  if(cur === val){
+    delete r.attend[eid];                            /* 再点一次同一个 = 取消，回到待确认 */
+    if(r.attendNote) delete r.attendNote[eid];        /* 取消标记时原因一并清掉，避免留着旧原因 */
+  } else {
+    /* 标记「不参加」必须留不参加原因：电话确认的结果要能追溯，也是后面补抽的依据 */
+    if(val === 'no'){
+      var why = askAbsentReason(r, eid);
+      if(!why){ alert('未填写不参加原因，本次未作标记。'); return; }
+      if(!r.attendNote) r.attendNote = {};
+      r.attendNote[eid] = why;
+    }
+    r.attend[eid] = val;
+  }
+  setRecords(rs);
+  refreshAfterAttend(r);
+}
+
+/* 单独改不参加原因 */
+function editAttNote(rid, eid){
+  var rs = records(), r = null;
+  for(var i=0;i<rs.length;i++){ if(rs[i].rid === rid){ r = rs[i]; break; } }
+  if(!r) return;
+  var why = askAbsentReason(r, eid);
+  if(!why){ alert('原因不能为空，未修改。'); return; }
+  if(!r.attendNote) r.attendNote = {};
+  r.attendNote[eid] = why;
+  setRecords(rs);
+  refreshAfterAttend(r);
+}
+
+/* 参会状态改动后的统一刷新 */
+function refreshAfterAttend(r){
+  /* 先按记录类型分流，再看对应弹窗是否开着。
+     原来只看弹窗状态，主记录弹窗开着时去改补抽记录，会拿主记录的渲染逻辑
+     去渲染补抽记录（补抽记录没有 groups.main），直接崩。 */
+  var isOn = function(id){ var x = document.getElementById(id); return x && String(x.className||'').indexOf('on') >= 0; };
+  if(r.kind === 'redraw'){
+    if(isOn('mRd')) viewRd(r.rid); else renderRedrawResult(r, true);
+  } else {
+    if(isOn('mRec')) viewRec(r.rid); else renderResult(r, true);
+  }
+  renderRecords(); renderRedrawRecords(); refreshRedrawSrc();
+  /* 补抽记录里改了参会状态，补抽名单要跟着变（标记不参加的会被自动勾上）。
+     但只在补抽页正选中这条母记录时才刷新，否则会清掉用户已经勾好的名单。 */
+  var sel = document.getElementById('rdSrc');
+  if(r.kind === 'redraw' && sel && sel.value === r.parent) loadRedrawSrc(true);
+}
+
+function attStat(rec, list){
+  var at = attendOf(rec), yes=0, no=0, pend=0;
+  (list||[]).forEach(function(e){
+    var v = at[e.id] || '';
+    if(v === 'yes') yes++; else if(v === 'no') no++; else pend++;
+  });
+  return { yes:yes, no:no, pend:pend, avail:yes+pend, total:yes+no+pend };
+}
+/* 全记录统计：need 需求 / yes 已确认 / pend 待确认 / no 不参加
+   avail 可用（含待定）/ lack 还差几人确认 / short 待定全来也不够，必须补抽 */
+function recAttStat(rec){
+  var g = { need:0, yes:0, no:0, pend:0, avail:0, bakAvail:0, lack:0, short:0, byGroup:{} };
+
+  /* 同一个人会同时出现在两个地方：原记录的备选名单里，和补抽记录的递补名单里
+     （递补的人本来就是那个备选）。按组逐段累加会把他算两遍，可用人数虚高，
+     本该报「人数不足」的反而报不出来。所以必须先按人去重，再统计。 */
+  var seen = {};
+  /* 还没答复的备选 = 后备梯队；确认参加的当场转为在任，见 takeBak */
+  var bakSeen = {};
+  /* 已登记缺席的人（补抽单上都有他了）不能再算可用，等同「不参加」 */
+  var absentIds = {};
+  (rec.absent||[]).forEach(function(a){ if(a && a.by) absentIds[a.id] = 1; });
+
+  /* 分组明细：补抽要按组分配名额，只知道项目总数不够 */
+  var gb = {};
+  var gbOf = function(gi){
+    var k = String(gi);
+    if(!gb[k]) gb[k] = {gi:gi, need:0, yes:0, no:0, pend:0, avail:0, bakAvail:0, lack:0, short:0};
+    return gb[k];
+  };
+
+  var put = function(bucket, e, at, gi){
+    var v = at[e.id] || '';
+    if(absentIds[e.id]) v = 'no';
+    if(bucket[e.id] === undefined) bucket[e.id] = {v:v, gi:gi};
+    /* 补抽记录里的状态是打过电话确认过的，比原记录里的空白更权威 */
+    else if(v && !bucket[e.id].v) bucket[e.id] = {v:v, gi:gi};
+  };
+  var take = function(list, at, gi){
+    (list||[]).forEach(function(e){ put(seen, e, at, gi); });
+  };
+  var takeBak = function(list, at, gi){
+    (list||[]).forEach(function(e){
+      var v = at[e.id] || '';
+      if(absentIds[e.id]) v = 'no';
+      /* 备选一旦确认参加就不再是「后备」——他当场占了名额，与正选无异。
+         继续留在后备里会绕过参会上限：需求 5 人时可以让 6 个备选全部「参加」
+         而不被拦下，统计上却还显示只差几人。 */
+      if(v === 'yes') put(seen, e, at, gi);
+      else put(bakSeen, e, at, gi);
+    });
+  };
+
+  (rec.groups||[]).forEach(function(x, gi){
+    /* 主记录分组用 count，补抽记录分组用 need；人员字段同理（main/backup vs fromBak/fromPool） */
+    var cnt  = (x.count != null) ? x.count : (x.need != null ? x.need : 0);
+    var main = x.main||[], bak = x.backup||[];
+    /* 补抽记录的分组没有 main/backup，人员都在 fromBak/fromPool，且都是占名额的 */
+    if(!main.length && !bak.length) main = (x.fromBak||[]).concat(x.fromPool||[]);
+    take(main, attendOf(rec), gi);
+    takeBak(bak, attendOf(rec), gi);
+    g.need += cnt;
+    gbOf(gi).need = cnt;
+  });
+  /* 补抽记录里递补进来的人同样计入：他们也要打电话确认能否参会 */
+  records().forEach(function(x){
+    if(x.parent !== rec.rid) return;
+    (x.incoming||[]).forEach(function(it){
+      if(it && it.expert) put(seen, it.expert, attendOf(x), (it.group != null ? it.group : 0));
+    });
+  });
+  /* 已经占上名额的人（含历次递补进来的），不再当后备重复计数 */
+  Object.keys(seen).forEach(function(id){ delete bakSeen[id]; });
+
+  Object.keys(seen).forEach(function(id){
+    var o = seen[id], b = gbOf(o.gi);
+    if(o.v === 'yes'){ g.yes++; b.yes++; }
+    else if(o.v === 'no'){ g.no++; b.no++; }
+    else { g.pend++; b.pend++; }
+  });
+  Object.keys(bakSeen).forEach(function(id){
+    var o = bakSeen[id], b = gbOf(o.gi);
+    /* 后备只统计「还没答复」的：明确不来的不算，已参加的早已转入 seen */
+    if(o.v !== 'no'){ g.bakAvail++; b.bakAvail++; }
+  });
+  g.avail = g.yes + g.pend;
+  g.lack  = Math.max(0, g.need - g.yes);
+  /* 空位数：在任与待定的人全算上，还空着几个位置——这就是这次要补的人数。
+     例：需求 5 人，正选来了 1 位、备选取来 1 位（已上位占名额），还空 3 个位置。 */
+  g.short = Math.max(0, g.need - g.avail);
+  /* 硬缺额：连还没答复的备选全顶上也凑不满。这种情况没得等，必须马上补抽。 */
+  g.hard  = Math.max(0, g.need - g.avail - g.bakAvail);
+  Object.keys(gb).forEach(function(k){
+    var b = gb[k];
+    b.avail = b.yes + b.pend;
+    b.lack  = Math.max(0, b.need - b.yes);
+    b.short = Math.max(0, b.need - b.avail);
+    b.hard  = Math.max(0, b.need - b.avail - b.bakAvail);
+  });
+  g.byGroup = gb;
+  return g;
+}
+
+function attBtns(rid, eid, v){
+  return '<span class="rgt">'
+    + '<button class="ab y'+(v==='yes'?' on':'')+'" title="点击标记参加，再点一次取消"'
+    + ' onclick="setAttend(\''+jsq(rid)+'\',\''+jsq(eid)+'\',\'yes\')">参加</button>'
+    + '<button class="ab n'+(v==='no'?' on':'')+'" title="点击标记不参加，需填写不参加原因；再点一次取消"'
+    + ' onclick="setAttend(\''+jsq(rid)+'\',\''+jsq(eid)+'\',\'no\')">不参加</button>'
+    + (v==='no' ? '<button class="ab" title="修改不参加原因"'
+       + ' onclick="editAttNote(\''+jsq(rid)+'\',\''+jsq(eid)+'\')">改原因</button>' : '')
+    + '</span>';
+}
+
+function attSummaryHTML(rec){
+  var st = recAttStat(rec), ist = attStat(rec, rec.invited||[]);
+  if(!st.need && !ist.total) return '';
+  var h = '<div class="at-sum" style="margin:10px 0 2px">'
+        + '<span>需抽专家 <b>'+st.need+'</b> 人</span>'
+        + '<span>已确认参加 <b>'+st.yes+'</b> 人</span>'
+        + '<span>待确认 <b>'+st.pend+'</b> 人</span>'
+        + '<span>不参加 <b>'+st.no+'</b> 人</span>'
+        + '<span>备选可用 <b>'+st.bakAvail+'</b> 人</span>'
+        + (ist.total ? '<span>特邀 <b>'+ist.yes+'</b> / '+ist.total+' 人参加</span>' : '')
+        + '</div>';
+  if(st.hard > 0){
+    h += '<div class="need"><strong>参会人数不足</strong>：待确认的专家与备选全部参加也凑不够，仍缺 <b>'+st.hard+'</b> 人。'
+       + '请 <a onclick="gotoRedraw(\''+jsq(rec.rid)+'\')">前往「专家补抽」重新抽取</a>。</div>';
+  } else if(st.lack > 0){
+    h += '<div class="need" style="background:#FAEEDA;color:#854F0B"><strong>还差 '+st.lack+' 人确认</strong>：'
+       + '继续打电话确认；无法参加的标记为「不参加」后由备选递补'
+       + (st.bakAvail ? '（备选还能来 '+st.bakAvail+' 人）。'
+                      : '——备选已全部退出，只能重新抽取。')
+       + '</div>';
+  } else if(st.need){
+    h += '<div class="need ok"><strong>参会人数已满足</strong>：需求 '+st.need+' 人，已确认参加 '+st.yes+' 人。'
+       + '其余未确认的备选已自动弱化，无需再联系；如需换人，先把某位已参加的专家点回「待确认」。</div>';
+  }
+  if(ist.no > 0){
+    h += '<div class="need" style="background:#FAEEDA;color:#854F0B">特邀专家中有 <b>'+ist.no+'</b> 人确认不参加，'
+       + '特邀不参与随机抽取，需人工重新指定。</div>';
+  }
+  return h;
+}
+
+/* 补抽结果的参会确认汇总：补抽出来的人同样要一个一个打电话确认，直到凑够需求人数。
+   要看两个数：本次补抽的确认进度（st），和项目总进度（pst，含在任正选与历次递补）。 */
+function rdAttSummaryHTML(rec){
+  var st = recAttStat(rec);
+  var pr = rec.parent ? findRec(rec.parent) : null;
+  var pst = pr ? recAttStat(pr) : null;
+  if(!st.need) return '';
+
+  var h = '<div class="at-sum" style="margin:10px 0 2px">'
+        + '<span>本次需补 <b>'+st.need+'</b> 人</span>'
+        + '<span>已确认参加 <b>'+st.yes+'</b> 人</span>'
+        + '<span>待确认 <b>'+st.pend+'</b> 人</span>'
+        + '<span>不参加 <b>'+st.no+'</b> 人</span>'
+        + '</div>';
+  if(pst && pst.need){
+    h += '<div class="at-sum" style="margin:0 0 2px">'
+       + '<span>项目总需求 <b>'+pst.need+'</b> 人</span>'
+       + '<span>已确认 <b>'+pst.yes+'</b> 人</span>'
+       + '<span>还差 <b>'+pst.lack+'</b> 人确认</span>'
+       + (pst.bakAvail ? '<span>备选可联系 <b>'+pst.bakAvail+'</b> 人</span>' : '')
+       + (pst.hard ? '<span>备选全上也缺 <b>'+pst.hard+'</b> 人</span>' : '')
+       + '</div>';
+  }
+
+  /* 优先级：参加人数已突破需求 > 本次补抽人数异常（旧版遗留）
+             > 人数凑不够必须再补 > 递补的人不肯来要换人 > 还有人没打通电话 > 完成 */
+  if(pst && pst.yes > pst.need){
+    /* 委员会人数是硬上限，超了就是数据矛盾，绝不能只报进度让人以为一切正常。
+       常见来源：旧版把「备选不参加」也算成缺席，一次补出十几个人；
+       或某人已被登记缺席、其位置已由递补者顶上，却仍被算作参加。 */
+    h += '<div class="need"><strong>⚠ 已确认参加 '+pst.yes+' 人，超过项目需求 '+pst.need+' 人</strong>：'
+       + '多出 <b>'+(pst.yes - pst.need)+'</b> 人，请把多余的人点成「不参加」，使参加人数回落到 '
+       + '<b>'+pst.need+'</b> 人。'
+       + (st.need > pst.need
+            ? '<br>本条补抽记录一次补了 <b>'+st.need+'</b> 人（旧版本把「备选不参加」也算成了缺席），'
+              + '实际只需要 <b>'+pst.lack+'</b> 人，其余的点「不参加」标记掉即可。'
+            : '')
+       + '<br>如需彻底清除，可在「抽取记录」里删除对应的补抽记录后重新补抽。</div>';
+  } else if(pst && st.need > pst.need){
+    /* 补的人数比需求还多，但尚未全部确认参加——先把人数压回需求，别再确认了 */
+    h += '<div class="need"><strong>⚠ 本次补抽人数（'+st.need+' 人）超过项目需求（'+pst.need+' 人）</strong>：'
+       + '这条补抽记录生成于旧版本，当时把「备选不参加」也算成了缺席，多补了人。'
+       + '委员会最多只要 <b>'+pst.need+'</b> 人，'
+       + (pst.lack > 0
+            ? '请只确认其中的 <b>'+pst.lack+'</b> 人参加，其余的点「不参加」标记掉。'
+            : '目前参加人数已够，请将其余的人点「不参加」标记掉。')
+       + '<br>如需彻底清除，可在「抽取记录」里删除本条补抽记录后重新补抽。</div>';
+  } else if(pst && pst.hard > 0){
+    h += '<div class="need"><strong>参会人数仍不足</strong>：待确认的专家与备选全部参加也凑不够，仍缺 <b>'+pst.hard+'</b> 人。'
+       + '请 <a onclick="gotoRedraw(\''+jsq(rec.parent)+'\')">继续补抽</a>。</div>';
+  } else if(st.no > 0){
+    h += '<div class="need"><strong>本次递补的专家中有 '+st.no+' 人不能参加</strong>：'
+       + '请 <a onclick="gotoRedraw(\''+jsq(rec.parent)+'\')">继续补抽</a>替换他们，直到凑够需求人数。</div>';
+  } else if(st.pend > 0){
+    h += '<div class="need" style="background:#FAEEDA;color:#854F0B"><strong>还需电话确认 '+st.pend+' 人</strong>：'
+       + '请按下方手机号逐一联系本次补抽的专家，确认后点「参加」；'
+       + '联系不上的先留「待确认」，确认不来的点「不参加」。'
+       + (pst && pst.lack ? '项目目前尚差 '+pst.lack+' 人确认。' : '')+'</div>';
+  } else if(pst && pst.lack > 0){
+    /* 本次补抽的人都确认完了，项目整体却还没凑够——不能报「已满足需求」。
+       还剩几个位置、以及备选是否联系完，要分别说清楚，否则不知道下一步干什么。 */
+    h += '<div class="need" style="background:#FAEEDA;color:#854F0B"><strong>项目还差 '+pst.lack+' 人确认</strong>：'
+       + '本次补抽的 '+st.yes+' 人已全部确认参加（'+st.yes+' / '+st.need+' 人），'
+       + '项目总进度仍是 '+pst.yes+' / '+pst.need+' 人。'
+       + (pst.bakAvail ? '还有 <b>'+pst.bakAvail+'</b> 位备选尚未答复，请先逐一电话联系；'
+                       + '确实凑不够时再 <a onclick="gotoRedraw(\''+jsq(rec.parent)+'\')">继续补抽</a>。'
+         : (pst.pend ? '请回到「抽取结果」继续联系尚在「待确认」的 '+pst.pend+' 位专家。'
+                     : '请 <a onclick="gotoRedraw(\''+jsq(rec.parent)+'\')">继续补抽</a>。'))
+       + '</div>';
+  } else if(st.yes >= st.need){
+    h += '<div class="need ok"><strong>本次补抽已全部确认参加</strong>（'+st.yes+' / '+st.need+' 人）'
+       + (pst ? '，项目总进度 '+pst.yes+' / '+pst.need+' 人' : '')+'，参会人数已满足需求。</div>';
+  }
+  return h;
+}
+
+function renderResult(rec, keepScroll){
+  var cc = condOf(rec);
+  var h = '';
+  if(rec.shortfall && rec.shortfall.length){
+    h += '<div class="notice w"><strong>候选人数不足</strong><br>'+rec.shortfall.map(esc).join('<br>')+'</div>';
+  }
+  h += '<div class="card"><div class="card-hd"><h3>抽取结果</h3><div style="flex:1"></div>'
+     + '<button class="btn sm" onclick="printRec(\''+rec.rid+'\')">打印 / 存为 PDF</button>'
+     + '<button class="btn sm" onclick="exportRec(\''+rec.rid+'\')">导出 CSV</button></div>'
+     + '<div class="hint">'+esc(ORG_NAME)+' · 记录编号 '+esc(rec.rid)+' · 抽取时间 '+esc(rec.at)+'</div>'
+     + infoTable(rec)
+     + attSummaryHTML(rec);
+
+  rec.groups.forEach(function(g){
+    var meta = [];
+    /* 评标地点 / 评标室已上移到顶部「抽取信息」统一显示，此处不再重复 */
+    if(g.altMajor) meta.push('临评 '+g.altMajor);
+    h += '<div style="margin-bottom:14px"><div style="font-size:13px;color:var(--text2);margin-bottom:6px">'
+       + '<strong>'+esc(g.major)+'</strong> · 需求 '+g.count+' 人'
+       + (meta.length ? ' <span style="color:var(--text3)">（'+esc(meta.join(' / '))+'）</span>' : '')
+       + '</div><div class="res-grid">';
+    h += resBox('正选 '+g.main.length+' 人', g.main, false, 'b', rec);
+    h += resBox('备选 '+g.backup.length+' 人（按序递补）', g.backup, true, 'n', rec);
+    h += '</div></div>';
+  });
+
+  var inv = rec.invited || [];
+  if(inv.length){
+    h += '<div style="margin-bottom:14px"><div style="font-size:13px;color:var(--text2);margin-bottom:6px">'
+       + '<strong>特邀专家</strong> · '+inv.length+' 人（直接登记，不参与随机抽取）</div>'
+       + '<div class="res-box"><div class="rh"><span>特邀专家</span><span class="tag g">指定</span></div><ol class="pick">';
+    inv.forEach(function(o){
+      var v = attVal(rec, o.id), tel = o.phone ? String(o.phone).trim() : '';
+      h += '<li'+(v==='no'?' class="no"':(v==='yes'?' class="yes"':''))+'>'
+         + '<span><span class="nm">'+esc(o.name)+'</span> <span class="meta">'
+         + [o.major, o.org].filter(function(x){return x;}).map(esc).join(' · ')
+         + '</span>' + (tel ? ' <span class="tel">'+esc(tel)+'</span>' : ' <span class="meta">无手机号</span>')
+         + (v==='no' ? ' <span class="meta" style="color:var(--text2)">· 不参加：'+esc(attNote(rec, o.id))+'</span>' : '')
+         + '</span>' + attBtns(rec.rid, o.id, v) + '</li>';
+    });
+    h += '</ol></div></div>';
+  }
+
+  h += '<details style="margin-top:8px"><summary>查看留痕信息（抽取条件 / 候选池快照 / 排除明细 / 随机源）</summary>'
+     + '<div style="padding:10px 0">'
+     + condTablesHTML(cc)
+     + '<dl class="kv" style="margin-top:12px">'
+     + '<dt>候选池规模</dt><dd>'+rec.poolSize+' 人</dd>'
+     + '<dt>候选池快照哈希</dt><dd class="mono">'+esc(rec.poolHash)+'</dd>'
+     + '<dt>随机源</dt><dd>'+esc(rec.randomSource)+'</dd>'
+     + '</dl>';
+  if(rec.excluded.length){
+    h += '<div style="margin-top:10px;font-size:12px;color:var(--text3)">被排除 '+rec.excluded.length+' 人：</div>'
+       + '<div style="max-height:180px;overflow:auto;margin-top:4px"><table><tbody>';
+    rec.excluded.forEach(function(x){
+      h += '<tr><td style="width:80px">'+esc(x.name)+'</td><td style="width:150px;color:var(--text3)">'+esc(x.org||'')+'</td>'
+         + '<td style="color:var(--red)">'+esc(x.reasons.join('；'))+'</td></tr>';
+    });
+    h += '</tbody></table></div>';
+  }
+  h += '</div></details></div>';
+
+  document.getElementById('resultBox').innerHTML = h;
+  if(!keepScroll) document.getElementById('resultBox').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+/* rec 非空时带参会确认按钮与完整手机号（要打电话通知本人） */
+function resBox(title, arr, isBak, tagCls, rec){
+  /* 已满足需求后，未确认的备选自动弱化：不用再打了 */
+  var st = rec ? recAttStat(rec) : null;
+  var full = !!(st && st.need > 0 && st.yes >= st.need);
+  var h = '<div class="res-box"><div class="rh"><span>'+esc(title)+'</span>'
+        + '<span class="tag '+(isBak?'n':'b')+'">'+(isBak?'递补':'正选')+'</span></div>';
+  if(!arr.length){ h += '<div class="empty" style="padding:18px">无</div></div>'; return h; }
+  if(full){
+    h += '<div style="padding:5px 12px;font-size:12px;color:var(--text3);background:var(--bg2)">'
+       + '参会人数已满足需求（'+st.yes+' / '+st.need+'），以下未确认人员无需再联系</div>';
+  }
+  h += '<ol class="pick">';
+  arr.forEach(function(e){
+    var v = rec ? attVal(rec, e.id) : '';
+    var tel = e.phone ? String(e.phone).trim() : '';
+    var dim = full && v !== 'yes' && v !== 'no';
+    h += '<li class="'+(isBak?'bak ':'')+(v==='no'?'no':(v==='yes'?'yes':''))+(dim?' dim':'')+'">'
+       + '<span><span class="nm">'+esc(e.name)+'</span> '
+       + '<span class="meta">'+esc(e.org||'')+(e.title?' · '+esc(e.title):'')+'</span>'
+       + (tel ? ' <span class="tel">'+esc(tel)+'</span>' : ' <span class="meta">无手机号</span>')
+       + (dim ? ' <span class="meta" style="color:var(--text3)">· 无需联系</span>' : '')
+       /* 不参加原因：标记时必填，这里带出来便于核对 */
+       + (v==='no' ? ' <span class="meta" style="color:var(--text2)">· 不参加：'+esc(attNote(rec, e.id))+'</span>' : '')
+       + '</span>'
+       + (rec ? attBtns(rec.rid, e.id, v) : '')
+       + '</li>';
+  });
+  return h + '</ol></div>';
+}
+
+/* ================= 记录 ================= */
+function renderRecords(){
+  var rs = records().filter(function(r){ return r.kind !== 'redraw'; });
+  var box = document.getElementById('recTable');
+  if(!box) return;
+  if(!rs.length){ box.innerHTML = '<div class="empty">还没有抽取记录。抽取一次后，这里会自动留痕。</div>'; return; }
+  var h = '<table><thead><tr><th style="width:150px">抽取时间</th><th>项目</th><th style="width:96px">操作人</th>'
+        + '<th style="width:88px">候选池</th><th style="width:74px">正选</th><th style="width:74px">备选</th><th style="width:74px">特邀</th>'
+        + '<th style="width:206px">操作</th></tr></thead><tbody>';
+  rs.forEach(function(r){
+    var pp = rp(r), dd = rdInfo(r);
+    var nm = (r.picks||[]).filter(function(p){return p.role==='正选';}).length;
+    var bk = (r.picks||[]).filter(function(p){return p.role==='备选';}).length;
+    var ty = (r.invited||[]).length;
+    var nrd = (r.redraws||[]).length;
+    h += '<tr><td class="num">'+esc(r.at)+'</td>'
+      + '<td><strong>'+esc(pp.name)+'</strong>'+(pp.code?' <span style="color:var(--text3)">· '+esc(pp.code)+'</span>':'')
+        + (pp.region?'<div style="color:var(--text3);font-size:12px">'+esc(pp.region)+'</div>':'')
+        + (r.shortfall&&r.shortfall.length?' <span class="tag a">人数不足</span>':'')
+        + (nrd?' <span class="tag b">已补抽 '+nrd+' 次</span>':'')+'</td>'
+      + '<td>'+esc(dd.user||'-')+'</td>'
+      + '<td class="num">'+r.poolSize+' 人</td>'
+      + '<td class="num">'+nm+' 人</td>'
+      + '<td class="num">'+bk+' 人</td>'
+      + '<td class="num">'+(ty?ty+' 人':'-')+'</td>'
+      + '<td><button class="btn sm" onclick="viewRec(\''+r.rid+'\')">详情</button> '
+      + '<button class="btn sm" onclick="gotoRedraw(\''+r.rid+'\')">补抽</button> '
+      + '<button class="btn sm" onclick="exportRec(\''+r.rid+'\')">导出</button> '
+      + '<button class="btn sm dgr" onclick="delRec(\''+r.rid+'\')">删除</button></td></tr>';
+  });
+  box.innerHTML = h + '</tbody></table>';
+}
+function findRec(rid){ return records().filter(function(r){return r.rid===rid;})[0]; }
+
+function viewRec(rid){
+  var r = findRec(rid); if(!r) return;
+  var cc = condOf(r);
+  var h = '<h3>抽取记录详情</h3>'
+    + infoTable(r)
+    + '<dl class="kv" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)">'
+    + '<dt>记录编号</dt><dd class="mono">'+esc(r.rid)+'</dd>'
+    + '<dt>抽取时间</dt><dd>'+esc(r.at)+'</dd>'
+    + '<dt>候选池</dt><dd>'+r.poolSize+' 人 · 快照哈希 <span class="mono">'+esc(r.poolHash)+'</span></dd>'
+    + '<dt>随机源</dt><dd>'+esc(r.randomSource)+'</dd>'
+    + '</dl>';
+
+  h += condTablesHTML(cc) + attSummaryHTML(r);
+
+  r.groups.forEach(function(g){
+    var meta = [];
+    h += '<div style="margin-bottom:14px;margin-top:12px"><div style="font-size:13px;margin-bottom:6px">'
+       + '<strong>'+esc(g.major)+'</strong> · 需求 '+g.count+' 人'
+       + (meta.length ? ' <span style="color:var(--text3)">（'+esc(meta.join(' / '))+'）</span>' : '') + '</div>'
+       + '<div class="res-grid">'+resBox('正选', g.main, false,'b', r)
+       + resBox('备选（按序递补）', g.backup, true,'n', r)+'</div></div>';
+  });
+
+  var inv = r.invited || [];
+  if(inv.length){
+    h += '<div style="margin-bottom:14px"><div style="font-size:13px;margin-bottom:6px"><strong>特邀专家</strong> · '+inv.length+' 人</div>'
+       + '<table><thead><tr><th style="width:44px">序</th><th style="width:80px">姓名</th><th style="width:110px">专业</th>'
+       + '<th style="width:110px">手机号</th><th style="width:150px">身份证</th><th>备注</th>'
+       + '<th style="width:76px">参会</th></tr></thead><tbody>';
+    inv.forEach(function(o,i){
+      var v = attVal(r, o.id);
+      h += '<tr'+(v==='no'?' style="opacity:.45"':'')+'><td>'+(i+1)+'</td><td>'+esc(o.name)+'</td><td>'+esc(o.major||'')+'</td>'
+         + '<td class="mono">'+esc(o.phone||'')+'</td>'
+         + '<td class="mono">'+esc(o.idNo||'')+'</td><td>'+esc(o.remark||'')+'</td>'
+         + '<td>'+attText(v)+'</td></tr>';
+    });
+    h += '</tbody></table></div>';
+  }
+
+  if(r.absent && r.absent.length){
+    h += '<div style="margin-bottom:14px"><div style="font-size:13px;font-weight:500;margin-bottom:5px">缺席与补抽（'+r.absent.length+' 人）</div>'
+       + '<table><thead><tr><th style="width:70px">角色</th><th style="width:90px">姓名</th><th style="width:110px">专业组</th>'
+       + '<th>缺席原因</th><th style="width:140px">登记时间</th><th style="width:110px">补抽编号</th></tr></thead><tbody>';
+    r.absent.forEach(function(a){
+      h += '<tr><td>'+esc(a.role)+'</td><td>'+esc(a.name)+'</td><td style="color:var(--text3)">'+esc(a.group||'-')+'</td>'
+         + '<td style="color:var(--red)">'+esc(a.reason)+'</td><td class="num">'+esc(a.at||'')+'</td>'
+         + '<td class="mono">'+esc(a.by||'')+'</td></tr>';
+    });
+    h += '</tbody></table></div>';
+  }
+
+  if(r.excluded && r.excluded.length){
+    h += '<details><summary>排除明细（'+r.excluded.length+' 人）</summary><div style="max-height:220px;overflow:auto;margin-top:6px">'
+       + '<table><tbody>';
+    r.excluded.forEach(function(x){
+      h += '<tr><td style="width:80px">'+esc(x.name)+'</td><td style="width:140px;color:var(--text3)">'+esc(x.org||'')+'</td>'
+         + '<td style="color:var(--red)">'+esc(x.reasons.join('；'))+'</td></tr>';
+    });
+    h += '</tbody></table></div></details>';
+  }
+
+  h += '<div class="modal-ft"><button class="btn" onclick="gotoRedraw(\''+r.rid+'\')">专家补抽</button>'
+     + '<button class="btn" onclick="printRec(\''+r.rid+'\')">打印 / 存为 PDF</button>'
+     + '<button class="btn" onclick="exportRec(\''+r.rid+'\')">导出 CSV</button>'
+     + '<button class="btn" onclick="closeM(\'mRec\')">关闭</button></div>';
+  document.getElementById('mRecBody').innerHTML = h;
+  document.getElementById('mRec').classList.add('on');
+}
+
+function gotoRedraw(rid){
+  refreshRedrawSrc();
+  document.getElementById('rdSrc').value = rid;
+  closeM('mRec'); closeM('mRd');
+  go('redraw');
+  loadRedrawSrc();
+}
+
+function delRec(rid){
+  var kids = records().filter(function(r){ return r.parent === rid; }).length;
+  var tip = '删除该抽取记录？此操作不可撤销，归档前请谨慎。';
+  if(kids) tip += '\n\n该记录下有 '+kids+' 条补抽记录，将一并删除。';
+  if(!confirm(tip)) return;
+  setRecords(records().filter(function(r){ return r.rid!==rid && r.parent!==rid; }));
+  renderRecords();
+  renderRedrawRecords();
+  refreshRedrawSrc();
+  loadRedrawSrcIfEmpty();
+}
+function loadRedrawSrcIfEmpty(){
+  var sel = document.getElementById('rdSrc');
+  if(!sel) return;
+  if(sel.value && findRec(sel.value)) return;
+  sel.value = '';
+  loadRedrawSrc();
+}
+
+function exportRec(rid){
+  var r = findRec(rid); if(!r) return;
+  var cc = condOf(r);
+  var rows = [];
+  rows.push(['评标专家抽取记录']);
+  rows.push(['记录编号', r.rid]);
+  rows.push(['抽取时间', r.at]);
+  projRows(r).forEach(function(x){ rows.push(x); });
+  rows.push(['候选池人数', r.poolSize]);
+  rows.push(['候选池快照哈希', r.poolHash]);
+  rows.push(['随机源', r.randomSource]);
+  rows.push(['同一单位上限', cc.sameOrg>0 ? cc.sameOrg : '不限制']);
+  rows.push(['职称门槛', cc.titleMin]);
+  rows.push(['备选比例', '1:'+(cc.backupRatio||0)]);
+
+  rows.push([]);
+  rows.push(['一、抽取专家组成']);
+  rows.push(['序号','评标专业','临评专业','行业','人数','抽取状态']);
+  cc.compose.forEach(function(o,i){ rows.push([i+1,o.major||'',o.altMajor||'',o.industry||'',o.count,o.status||'未抽取']); });
+
+  rows.push([]);
+  rows.push(['二、特邀专家']);
+  rows.push(['序号','姓名','专业','手机号','身份证','备注']);
+  cc.invited.forEach(function(o,i){ rows.push([i+1,o.name||'',o.major||'',o.phone||'',o.idNo||'',o.remark||'']); });
+
+  rows.push([]);
+  rows.push(['三、回避单位信息']);
+  rows.push(['序号','单位名称','统一社会信用代码','回避原因']);
+  cc.avoidOrgs.forEach(function(o,i){ rows.push([i+1,o.name||'',o.credit||'',o.reason||'']); });
+
+  rows.push([]);
+  rows.push(['四、回避专家信息']);
+  rows.push(['序号','回避专家姓名','回避专家证件号码','回避原因']);
+  cc.avoidExperts.forEach(function(o,i){ rows.push([i+1,o.name||'',o.idNo||'',o.reason||'']); });
+
+  rows.push([]);
+  rows.push(['五、抽取结果']);
+  rows.push(['序号','角色','评标室','评标专业','专家编号','姓名','单位','职称','专业','手机号','参会确认','评标地点','备注']);
+  var i = 0;
+  (r.groups||[]).forEach(function(g){
+    (g.main||[]).forEach(function(e){ i++; rows.push([i,'正选',groupRoom(r,g),g.major,e.id,e.name,e.org,e.title,e.major,e.phone,attText(attVal(r,e.id)),groupPlace(r,g),(attVal(r,e.id)==='no'?attNote(r,e.id):'')]); });
+  });
+  (r.groups||[]).forEach(function(g){
+    (g.backup||[]).forEach(function(e){ i++; rows.push([i,'备选',groupRoom(r,g),g.major,e.id,e.name,e.org,e.title,e.major,e.phone,attText(attVal(r,e.id)),groupPlace(r,g),(attVal(r,e.id)==='no'?attNote(r,e.id):'')]); });
+  });
+  (r.invited||[]).forEach(function(o){ i++; rows.push([i,'特邀',recRoom(r),o.major||'',o.id,o.name,o.org||'',o.title||'','',o.phone||'',attText(attVal(r,o.id)),o.place||recPlace(r),(attVal(r,o.id)==='no'?attNote(r,o.id):'')]); });
+
+  var stx = recAttStat(r), isx = attStat(r, r.invited||[]);
+  /* 汇总人数按「这张表里真正列出来的人」统计：补抽递补进来的人不在本表里，
+     用 recAttStat 的全局口径会让汇总和上面的名单对不上（打印件同理）。
+     「需抽人数 / 仍缺人数」仍用全局口径——那是补抽依据，必须算上递补的人。 */
+  var cyes = 0, cno = 0, cpend = 0;
+  (r.groups||[]).forEach(function(g){
+    (g.main||[]).concat(g.backup||[]).forEach(function(e){
+      var v = attVal(r, e.id);
+      if(v === 'yes') cyes++; else if(v === 'no') cno++; else cpend++;
+    });
+  });
+  rows.push([]);
+  rows.push(['参会确认汇总']);
+  rows.push(['需抽专家人数', stx.need]);
+  rows.push(['已确认参加', cyes]);
+  rows.push(['待确认', cpend]);
+  rows.push(['不参加', cno]);
+  rows.push(['仍缺人数（需补抽）', stx.short]);
+  if(isx.total) rows.push(['特邀确认参加', isx.yes + ' / ' + isx.total]);
+
+  if(r.absent && r.absent.length){
+    rows.push([]);
+    rows.push(['缺席与补抽']);
+    rows.push(['角色','姓名','专业组','缺席原因','登记时间','补抽编号']);
+    r.absent.forEach(function(a){ rows.push([a.role,a.name,a.group||'',a.reason,a.at||'',a.by||'']); });
+  }
+  if(r.excluded && r.excluded.length){
+    rows.push([]);
+    rows.push(['排除明细']);
+    rows.push(['姓名','单位','排除原因']);
+    r.excluded.forEach(function(x){ rows.push([x.name, x.org||'', x.reasons.join('；')]); });
+  }
+  download('抽取记录_'+esc(rp(r).name).slice(0,20)+'_'+r.at.slice(0,10)+'.csv', toCSV(rows), 'text/csv;charset=utf-8');
+}
+
+function printRec(rid){
+  var r = findRec(rid); if(!r) return;
+  var cc = condOf(r);
+  /* 归档件不列评标时长（2026-10-20 用户要求）；CSV 导出与屏幕详情仍保留 */
+  var pr = projRows(r).filter(function(x){ return x[0] !== '评标时长'; });
+  var info = '';
+  for(var pi=0; pi<pr.length; pi+=2){
+    info += '<tr><th style="width:100px">'+esc(pr[pi][0])+'</th><td>'+esc(pr[pi][1])+'</td>';
+    if(pr[pi+1]) info += '<th style="width:100px">'+esc(pr[pi+1][0])+'</th><td>'+esc(pr[pi+1][1])+'</td>';
+    else info += '<th></th><td></td>';
+    info += '</tr>';
+  }
+  var h = '<div style="font-size:13px;font-weight:600;margin-bottom:2px">'+esc(ORG_NAME)+'</div>'
+    + '<h2>评标专家抽取记录</h2>'
+    + '<div style="color:#555;font-size:11px;margin-bottom:12px">记录编号 '+esc(r.rid)+' · 抽取时间 '+esc(r.at)+'</div>';
+  h += '<div class="sec"><table><tbody>' + info
+    /* 只报专家库总人数，不暴露候选池规模与快照哈希；随机方式也不再单列
+       （留空 th/td 是为了和上面两两成对的项目信息表对齐） */
+    + '<tr><th>候选池</th><td>专家库共 '+experts().length+' 人</td><th></th><td></td></tr>'
+    + '</tbody></table></div>';
+
+  h += '<div class="sec">' + condTablesHTML(cc, true) + '</div>';
+
+  /* 抽取条件四张表自带「一～四」，结果部分按同一套编号接「五、抽取结果」，
+     与导出 CSV 的分节保持一致（标题与表格尽量不分页断开） */
+  h += '<div style="font-weight:600;margin:14px 0 2px;page-break-after:avoid">五、抽取结果</div>';
+
+  /* 汇总口径 = 名单里看得见的行：打印出几个「参加 / 不参加」就报几个 */
+  var printYes = 0, printNo = 0;
+  (r.groups||[]).forEach(function(g){
+    var meta = [];
+    if(g.altMajor) meta.push('临评 '+g.altMajor);
+    h += '<div class="sec"><div style="font-weight:600;margin-bottom:4px">'+esc(g.major)+'（需求 '+g.count+' 人）'
+       + (meta.length?'　<span style="font-weight:400;color:#555">'+esc(meta.join(' / '))+'</span>':'')+'</div>'
+       + '<table><thead><tr><th style="width:44px">序号</th><th style="width:76px">姓名</th>'
+       + '<th style="width:170px">单位</th><th style="width:110px">职称</th><th style="width:110px">联系方式</th>'
+       + '<th style="width:60px">参会</th><th style="width:110px">备注</th></tr></thead><tbody>';
+    /* 角色列已取消（正选 / 备选不再区分），序号在正选与备选之间连续编排。
+       汇总人数按「真正打印出来的行」累加（见下方 printYes / printNo），
+       不再用 recAttStat —— 它把补抽递补进来的人、登记缺席的人也数进去，
+       汇总会和名单对不上。 */
+    var seq = 0;
+    var prow = function(e){
+      var v = attVal(r, e.id);
+      seq++;
+      if(v === 'yes') printYes++;
+      else if(v === 'no') printNo++;
+      return '<tr'+(v==='no'?' style="text-decoration:line-through;color:#999"':'')+'><td>'+seq+'</td>'
+           + '<td>'+esc(e.name)+'</td><td>'+esc(e.org||'')+'</td><td>'+esc(e.title||'')+'</td><td>'+esc(e.phone||'')+'</td>'
+           + '<td>'+attText(v)+'</td>'
+           + '<td>'+(v==='no' ? esc(attNote(r, e.id)) : '')+'</td></tr>';
+    };
+    /* 名单截止到最后一位已表态的专家：末尾那一串还没联系（待确认）的不进归档件。
+       中间的待确认要留着——那是还在联系的人，删了名单就断档了。
+       下限是需求人数：一个人都没确认时不能把整张名单截空。 */
+    var prows = (g.main||[]).concat(g.backup||[]);
+    while(prows.length > (g.count||0) && !attVal(r, prows[prows.length-1].id)) prows.pop();
+    prows.forEach(function(e){ h += prow(e); });
+    h += '</tbody></table></div>';
+  });
+
+  var inv = r.invited || [];
+  if(inv.length){
+    h += '<div class="sec"><div style="font-weight:600;margin-bottom:4px">特邀专家（'+inv.length+' 人，不参与随机抽取）</div>'
+       + '<table><thead><tr><th style="width:44px">序号</th><th style="width:70px">姓名</th><th style="width:100px">专业</th>'
+       + '<th style="width:100px">手机号</th><th style="width:150px">身份证</th><th>备注</th><th style="width:60px">参会</th></tr></thead><tbody>';
+    inv.forEach(function(o,i){
+      var v = attVal(r, o.id);
+      h += '<tr'+(v==='no'?' style="text-decoration:line-through;color:#999"':'')+'>'
+         + '<td>'+(i+1)+'</td><td>'+esc(o.name)+'</td><td>'+esc(o.major||'')+'</td><td>'+esc(o.phone||'')+'</td>'
+         + '<td>'+esc(o.idNo||'')+'</td>'
+         /* 特邀登记备注 + 不参加原因（同一格，避免表头出现两个「备注」） */
+         + '<td>'+esc(o.remark||'')+(v==='no'?'<div style="color:#A32D2D">不参加：'+esc(attNote(r, o.id))+'</div>':'')+'</td>'
+         + '<td>'+attText(v)+'</td></tr>';
+    });
+    h += '</tbody></table></div>';
+  }
+
+  if(r.absent && r.absent.length){
+    h += '<div class="sec"><div style="font-weight:600;margin-bottom:4px">缺席与补抽（'+r.absent.length+' 人）</div>'
+       + '<table><thead><tr><th style="width:60px">角色</th><th style="width:80px">姓名</th><th style="width:110px">专业组</th>'
+       + '<th>缺席原因</th><th style="width:130px">登记时间</th><th style="width:110px">补抽编号</th></tr></thead><tbody>';
+    r.absent.forEach(function(a){
+      h += '<tr><td>'+esc(a.role)+'</td><td>'+esc(a.name)+'</td><td>'+esc(a.group||'')+'</td><td>'+esc(a.reason)+'</td>'
+         + '<td>'+esc(a.at||'')+'</td><td>'+esc(a.by||'')+'</td></tr>';
+    });
+    h += '</tbody></table></div>';
+  }
+
+  var stp = recAttStat(r);
+  if(stp.need){
+    /* 一行六列：需抽 / 已确认参加 / 已确认不参加。不再列「待确认」和「仍缺人数」 */
+    h += '<div class="sec"><div style="font-weight:600;margin-bottom:4px">参会确认汇总</div>'
+       + '<table><tbody>'
+       + '<tr><th style="width:120px">需抽专家人数</th><td>'+stp.need+' 人</td>'
+       + '<th style="width:120px">已确认参加</th><td>'+printYes+' 人</td>'
+       + '<th style="width:120px">已确认不参加</th><td>'+printNo+' 人</td></tr>'
+       + '</tbody></table></div>';
+  }
+  h += '<div style="margin-top:20px;font-size:11px;color:#666">抽取人签字：____________　　监督人签字：____________　　日期：____________</div>';
+
+  document.getElementById('printArea').innerHTML = h;
+  window.print();
+}
+
+/* ================= 专家补抽 ================= */
+var RD_STATE = { parent:null };
+
+function refreshRedrawSrc(){
+  var sel = document.getElementById('rdSrc');
+  if(!sel) return;
+  var cur = sel.value;
+  var rs = records().filter(function(r){ return r.kind !== 'redraw'; });
+  var h = '<option value="">请选择原抽取记录</option>';
+  rs.forEach(function(r){
+    var p = rp(r);
+    h += '<option value="'+esc(r.rid)+'">'+esc(r.at)+' · '+esc(p.name||'(未命名项目)')+(p.code?'（'+esc(p.code)+'）':'')+'</option>';
+  });
+  sel.innerHTML = h;
+  sel.value = (cur && rs.some(function(r){ return r.rid===cur; })) ? cur : '';
+}
+
+/* keepResult：内部调用（如补抽完成后刷新名单）时保留已渲染的补抽结果。
+   只有用户主动切换「原抽取记录」时才清空结果区。
+   曾经无条件清空，导致 runRedraw() 末尾一调用，刚渲染的补抽结果就没了。 */
+function loadRedrawSrc(keepResult){
+  var sel = document.getElementById('rdSrc');
+  var box = document.getElementById('rdSrcInfo');
+  if(!sel || !box) return;
+  var rid = sel.value;
+  var panel = document.getElementById('rdPanel'), opt = document.getElementById('rdOpt');
+  if(!keepResult) document.getElementById('rdResult').innerHTML = '';
+  document.getElementById('rdMsg').innerHTML = '';
+  document.getElementById('rdInfo').textContent = '';
+  if(!rid){
+    box.innerHTML = '';
+    if(panel) panel.style.display = 'none';
+    if(opt) opt.style.display = 'none';
+    RD_STATE.parent = null;
+    return;
+  }
+  var r = findRec(rid);
+  if(!r){ box.innerHTML = ''; RD_STATE.parent = null; return; }
+  RD_STATE.parent = r;
+  var cc = condOf(r);
+  var noCnt = 0, ownIds = {};
+  (r.groups||[]).forEach(function(g){
+    ((g.main||[]).concat(g.backup||[])).forEach(function(e){
+      ownIds[e.id] = 1;
+      if(attVal(r, e.id) === 'no') noCnt++;
+    });
+  });
+  /* 历次补抽递补进来、又被标记「不参加」的人，同样会自动带出 */
+  records().forEach(function(x){
+    if(x.parent !== r.rid) return;
+    (x.incoming||[]).forEach(function(it){
+      if(it.expert && !ownIds[it.expert.id] && attVal(x, it.expert.id) === 'no') noCnt++;
+    });
+  });
+  box.innerHTML = infoTable(r)
+    + '<div class="rd-sum">沿用原记录条件：回避单位 '+cc.avoidOrgs.length+' 家 · 回避专家 '+cc.avoidExperts.length+' 人'
+    + ' · 同单位上限 '+(cc.sameOrg>0?cc.sameOrg+' 人':'不限制')+' · 职称门槛 '+esc(cc.titleMin)
+    + ' · 备选比例 1:'+(cc.backupRatio||0)
+    + (noCnt ? '<div style="margin-top:6px">已自动带出 <b>'+noCnt+'</b> 位在抽取结果中标记为「不参加」的专家，下方默认勾选，可自行取消。</div>' : '')
+    + '</div>';
+  renderRedrawList(r);
+  if(panel) panel.style.display = '';
+  if(opt) opt.style.display = '';
+  syncAbsent();
+}
+
+function renderRedrawList(r){
+  var abs = {};
+  (r.absent||[]).forEach(function(a){ abs[a.id] = a; });
+
+  /* 参会状态要合并历次补抽记录：递补进来的人（哪怕他本来就是原记录的备选），
+     「参加 / 不参加」是打完电话后在补抽结果里点的，记在补抽记录上，
+     原记录的 attend 里没有。只读原记录会把他们漏掉，带不出来。 */
+  var at = mergedAttend(r.rid);
+
+  /* 原记录名单里已出现的人（正选 + 备选） */
+  var ownIds = {};
+  (r.groups||[]).forEach(function(g){
+    ((g.main||[]).concat(g.backup||[])).forEach(function(e){ ownIds[e.id] = 1; });
+  });
+  var h = '';
+  (r.groups||[]).forEach(function(g, gi){
+    h += '<div class="sub-sec"><div class="sub-hd"><span class="no">'+(gi+1)+'</span><b>'+esc(g.major||'专业组')+'</b>'
+       + '<span class="note">需求 '+g.count+' 人 · 正选 '+((g.main||[]).length)+' 人 · 备选 '+((g.backup||[]).length)+' 人'
+       + ' · <span style="color:var(--text3)">备选确认参加即占名额；不参加则退出，由补抽重新递补</span>'
+       + '</span></div>';
+    h += '<table class="dt-tb"><thead><tr><th style="width:54px">缺席</th><th style="width:78px">角色</th>'
+       + '<th style="width:92px">姓名</th><th>单位</th><th style="width:116px">手机号</th>'
+       + '<th style="width:74px">参会</th><th style="width:170px">缺席原因</th></tr></thead><tbody>';
+    [['正选', g.main||[]], ['备选', g.backup||[]]].forEach(function(pair){
+      pair[1].forEach(function(e, i){
+        var done = abs[e.id];
+        /* 抽取结果里已标记为不参加 → 自动勾上，正选和备选一视同仁。
+           备选也要登记：他确认不参加就等于退出递补梯队，补抽时才不会再把名单给他。
+           两者区别只在计数——正选缺席空出名额要补人，备选退出不占名额无需补人。 */
+        var noShow = !done && at[e.id] === 'no';
+        var on = !!done || noShow;
+        h += '<tr'+(on?' class="absent-tr hl"':'')+'>'
+          + '<td style="text-align:center"><input type="checkbox" data-f="absent"'
+          + ' data-id="'+esc(e.id)+'" data-name="'+esc(e.name)+'" data-role="'+pair[0]+'" data-gi="'+gi+'"'
+          + ' onchange="syncAbsent()"'+(done?' checked disabled':(noShow?' checked':''))+'></td>'
+          + '<td>'+pair[0]+(pair[0]==='备选'?' '+(i+1):'')+'</td>'
+          + '<td>'+esc(e.name)+'</td>'
+          + '<td style="color:var(--text3)">'+esc(e.org||'')+'</td>'
+          + '<td class="mono">'+esc(e.phone||'')+'</td>'
+          + '<td'+(noShow?' style="color:var(--red)"':'')+'>'+attText(at[e.id] || '')+'</td>'
+          + '<td><input type="text" data-f="reason" placeholder="如：请假 / 回避 / 放弃"'
+          + (on ? ' value="'+esc(done ? (done.reason||'') : '确认不参加')+'"' : ' disabled')+'>'
+          + (done? '<div style="font-size:11px;color:var(--red)">已补抽 '+esc(done.at||'')+'（'+esc(done.by||'')+'）</div>':'')
+          + (noShow? '<div style="font-size:11px;color:var(--text3)">来自抽取结果的「不参加」标记'
+              + (pair[0]==='备选' ? '（备选退出，无需补人）' : '（空出名额，需补人）')+'</div>':'')
+          + (at[e.id]==='yes' ? '<div style="font-size:11px;color:var(--green,#0a7)">已确认参加'
+              + (pair[0]==='备选' ? '，已占用名额' : '')+'</div>' : '')
+          + '</td></tr>';
+      });
+    });
+    h += '</tbody></table></div>';
+  });
+
+  /* 历次补抽递补进来的人也在这里：他们同样要电话确认，来不了的得能再补一次。
+     不列出来的话，递补的人一缺席就补不下去了，人数永远凑不齐。
+     他们的参会状态记在各补抽记录上（原记录 attend 里没有他们）。 */
+  var rds = records().filter(function(x){ return x.parent === r.rid; });
+  if(rds.length){
+    /* 已经被再次补抽替换掉的人（出现在某条补抽记录的缺席名单里），不能再勾 */
+    var incRows = [];
+    rds.forEach(function(x){
+      var redone = {};
+      (x.absentees||[]).forEach(function(a){ redone[a.id] = 1; });
+      (x.incoming||[]).forEach(function(it){
+        var e = it.expert; if(!e) return;
+        /* 本来就是原记录的备选，上面那段已经列过了，这里不再重复（否则会重复计缺额） */
+        if(ownIds[e.id]) return;
+        var gi = (it.group != null) ? it.group : 0;
+        var doneRec = (r.absent||[]).filter(function(a){ return a.id === e.id; })[0];
+        var done = !!redone[e.id] || !!doneRec;
+        var v = attVal(x, e.id);
+        incRows.push({ e:e, rd:x, gi:gi, done:done, v:v, src:it.source,
+                       at:(doneRec ? doneRec.at : ''), by:(doneRec ? doneRec.by : '') });
+      });
+    });
+    if(incRows.length){
+      h += '<div class="sub-sec"><div class="sub-hd"><b>历次补抽递补人员（'+incRows.length+' 人）</b>'
+         + '<span class="note">同样需电话确认；不能参加的请勾选并填原因，可再次补抽</span></div>'
+         + '<table class="dt-tb"><thead><tr><th style="width:54px">缺席</th><th style="width:78px">角色</th>'
+         + '<th style="width:92px">姓名</th><th>单位</th><th style="width:116px">手机号</th>'
+         + '<th style="width:74px">参会</th><th style="width:170px">缺席原因</th></tr></thead><tbody>';
+      incRows.forEach(function(it){
+        var e = it.e, on = it.done || it.v === 'no';
+        h += '<tr'+(on?' class="absent-tr hl"':'')+'>'
+          + '<td style="text-align:center"><input type="checkbox" data-f="absent"'
+          + ' data-id="'+esc(e.id)+'" data-name="'+esc(e.name)+'" data-role="补抽" data-gi="'+it.gi+'"'
+          + ' onchange="syncAbsent()"'+(on?' checked':'')+(it.done?' disabled':'')+'></td>'
+          + '<td>补抽</td>'
+          + '<td>'+esc(e.name)+'</td>'
+          + '<td style="color:var(--text3)">'+esc(e.org||'')+'</td>'
+          + '<td class="mono">'+esc(e.phone||'')+'</td>'
+          + '<td'+(it.v==='no'?' style="color:var(--red)"':'')+'>'+attText(it.v)+'</td>'
+          + '<td><input type="text" data-f="reason" placeholder="如：请假 / 回避 / 放弃"'
+          + (on ? ' value="确认不参加"' : ' disabled')+'>'
+          + (it.done ? '<div style="font-size:11px;color:var(--red)">已再次补抽'
+              + (it.at ? ' '+esc(it.at) : '') + (it.by ? '（'+esc(it.by)+'）' : '')+'</div>' : '')
+          + (it.v==='no' && !it.done ? '<div style="font-size:11px;color:var(--text3)">来自补抽结果的「不参加」标记</div>' : '')
+          + '</td></tr>';
+      });
+      h += '</tbody></table></div>';
+    }
+  }
+
+  document.getElementById('rdList').innerHTML =
+    h || '<div class="empty">该记录没有可补抽的专家名单。</div>';
+}
+
+/* 勾选联动：启用/停用原因输入，统计待补抽人数 */
+function syncAbsent(){
+  var rows = document.getElementById('rdList').getElementsByTagName('tr');
+  var sel = document.getElementById('rdSrc');
+  var r = (sel && sel.value) ? findRec(sel.value) : null;
+  /* 确认参加过的备选、被历次补抽递补上位的备选都占着名额，他们缺席要补人；
+     其余备选只是退出递补梯队，不占名额，走了不用补。 */
+  var atAll = r ? mergedAttend(r.rid) : {};
+  var promoted = r ? promotedIds(r.rid) : {};
+  var ids = {}, n = 0, q = 0;
+  for(var i=0;i<rows.length;i++){
+    var cb=null, rs=null, els = rows[i].getElementsByTagName('input');
+    for(var j=0;j<els.length;j++){
+      var f = els[j].getAttribute && els[j].getAttribute('data-f');
+      if(f==='absent') cb = els[j];
+      if(f==='reason') rs = els[j];
+    }
+    if(!cb) continue;
+    if(cb.disabled) continue;
+    if(rs){ rs.disabled = !cb.checked; if(!cb.checked) rs.value = ''; }
+    if(cb.checked){
+      var id = cb.getAttribute('data-id');
+      ids[id] = 1;
+      var isBak = cb.getAttribute('data-role') === '备选'
+                  && atAll[id] !== 'yes' && !promoted[id];
+      if(isBak) q++; else n++;
+    }
+  }
+  /* 补多少人看项目还空着几个位置，不看勾了几个人 */
+  var short = 0, need = 0, avail = 0;
+  if(r){
+    var st = statWithAbsent(r, ids);
+    short = st.short; need = st.need; avail = st.avail;
+  }
+  var tag = document.getElementById('rdAbsSum');
+  if(tag){
+    var parts = [];
+    if(n || q){
+      parts.push(short > 0 ? '需补 '+short+' 人' : '无需补抽');
+      if(q) parts.push('备选退出 '+q+' 人');
+    } else parts.push('未标记缺席');
+    tag.textContent = parts.join(' · ');
+    tag.className = 'tag ' + (short > 0 ? 'r' : (q ? 'a' : 'n'));
+  }
+  var info = document.getElementById('rdInfo');
+  if(info){
+    info.textContent = short > 0
+      ? '待补抽 '+short+' 人（需求 '+need+' 人，现有 '+avail+' 人）'
+      : (q ? '无需补抽（仅备选退出，不占名额）' : '');
+  }
+  document.getElementById('rdMsg').innerHTML = '';
+}
+
+function readAbsent(){
+  var out = [], rows = document.getElementById('rdList').getElementsByTagName('tr');
+  for(var i=0;i<rows.length;i++){
+    var cb=null, rs=null, els = rows[i].getElementsByTagName('input');
+    for(var j=0;j<els.length;j++){
+      var f = els[j].getAttribute && els[j].getAttribute('data-f');
+      if(f==='absent') cb = els[j];
+      if(f==='reason') rs = els[j];
+    }
+    if(!cb || !cb.checked || cb.disabled) continue;
+    out.push({
+      id: cb.getAttribute('data-id'),
+      name: cb.getAttribute('data-name'),
+      role: cb.getAttribute('data-role'),
+      gi: parseInt(cb.getAttribute('data-gi'),10),
+      reason: (rs && String(rs.value||'').trim()) || ''
+    });
+  }
+  return out;
+}
+
+/* 补抽候选池：沿用原记录条件，可追加当前回避信息 */
+function redrawPool(pc, extra, majors){
+  var ao = pc.avoidOrgs.map(function(o){ return o.name; })
+        .concat((extra.avoidOrgs||[]).map(function(o){ return o.name; }));
+  var an = pc.avoidExperts.map(function(o){ return o.name; })
+        .concat((extra.avoidExperts||[]).map(function(o){ return o.name; }));
+  var ai = pc.avoidExperts.map(function(o){ return o.idNo; })
+        .concat((extra.avoidExperts||[]).map(function(o){ return o.idNo; }))
+        .filter(function(s){ return s; });
+  var excluded = [], pool = [];
+  experts().forEach(function(e){
+    var why = [];
+    if((e.status||'在库')!=='在库') why.push('状态为「'+(e.status||'在库')+'」，不在库');
+    var hn = an.filter(function(n){ return n && e.name && e.name.indexOf(n)>=0; });
+    if(hn.length) why.push('命中回避专家：'+hn.join('、'));
+    if(ai.length && e.idNo && ai.indexOf(e.idNo)>=0) why.push('回避专家证件号码匹配');
+    /* 回避单位：仅比对专家「所在单位」 */
+    var ho = ao.filter(function(o){ return o && (e.org||'').indexOf(o)>=0; });
+    if(ho.length) why.push('命中回避单位（所在单位）：'+ho.join('、'));
+    if(pc.titleMin && pc.titleMin!=='不限'){
+      var ti = TITLES.indexOf(e.title), mi = TITLES.indexOf(pc.titleMin);
+      if(ti<0 || ti>mi) why.push('职称未达门槛（'+(e.title||'未填写')+'）');
+    }
+    var hit = null;
+    for(var i=0;i<majors.length;i++){ if(matchMajor(e, majors[i])){ hit = majors[i]; break; } }
+    if(!hit) why.push('评标专业 / 临评专业不匹配补抽需求');
+    if(why.length) excluded.push({id:e.id, name:e.name, org:e.org, reasons:why});
+    else pool.push({e:e, major:hit});
+  });
+  return {pool:pool, excluded:excluded};
+}
+
+/* 计算补抽方案（不写库） */
+function planRedraw(){
+  var sel = document.getElementById('rdSrc');
+  if(!sel || !sel.value) return {err:'请先选择原抽取记录。'};
+  var r = findRec(sel.value);
+  if(!r) return {err:'原抽取记录不存在，可能已被删除。'};
+  var abs = readAbsent();
+  if(!abs.length) return {err:'请先勾选缺席专家，并填写缺席原因。'};
+
+  var mode = document.getElementById('rdMode').value;
+  var useExtra = document.getElementById('rdExtra').checked;
+  var pc = condOf(r);
+  var extra = useExtra ? readCond() : {avoidOrgs:[], avoidExperts:[]};
+
+  var absentIds = {}; abs.forEach(function(a){ absentIds[a.id] = 1; });
+
+  /* 合并历次补抽的参会状态：备选确认参加即已递补上位，与正选一样占着名额 */
+  var atAll = mergedAttend(r.rid);
+  var promoted = promotedIds(r.rid);
+
+  /* taken = 已在委员会中的人（不可重复） */
+  var taken = {};
+  Object.keys(absentIds).forEach(function(id){ taken[id] = 1; });
+  (r.picks||[]).forEach(function(p){
+    if(p.role === '备选'){
+      /* 确认参加的备选已经上位，占着名额，不能再抽他；
+         还没答复的备选仍是递补来源，保留在 g.backup 里由下面挑选 */
+      if(atAll[p.id] === 'yes' || promoted[p.id]) taken[p.id] = 1;
+      return;
+    }
+    if(!absentIds[p.id]) taken[p.id] = 1;
+  });
+  (pc.invited||[]).forEach(function(o){
+    var m = experts().filter(function(e){ return e.name === o.name; })[0];
+    if(m && !absentIds[m.id]) taken[m.id] = 1;
+  });
+  /* 历史补抽已进入委员会的人 */
+  records().forEach(function(x){
+    if(x.parent !== r.rid) return;
+    (x.incoming||[]).forEach(function(it){
+      if(it.expert && !absentIds[it.expert.id]) taken[it.expert.id] = 1;
+    });
+  });
+
+  /* 原记录备选名单：不参与专家库重抽，避免与递补重复 */
+  var backupIds = {};
+  (r.picks||[]).forEach(function(p){ if(p.role === '备选') backupIds[p.id] = 1; });
+
+  /* 历次补抽已登记为缺席 / 退出的人，不能再拿来递补。
+     备选一旦被登记「退出」，说明电话已经打过、他确实不来了，
+     后续补抽不该再把名单递到他手上（否则退出的人又被请回来，统计自相矛盾）。 */
+  var everAbsent = {};
+  (r.absent||[]).forEach(function(a){ if(a && a.by) everAbsent[a.id] = 1; });
+
+  /* 补多少人看项目还空着几个位置，不看勾了几个人。
+     例：需求 5 人，正选来了 1 位、备选取来 1 位（已递补上位占名额），
+     哪怕把其余 4 位正选和 5 位备选全勾上，也只补 3 人。
+     曾经按勾选人数累加，一次能补出十几个人，远超需求。 */
+  var st2 = statWithAbsent(r, absentIds);
+  var needBy = {};
+  Object.keys(st2.byGroup).forEach(function(k){
+    var b = st2.byGroup[k];
+    if(b.short > 0) needBy[b.gi] = b.short;
+  });
+
+  /* 备选退出：他从没占过名额（没确认参加、也没被递补上位），走了不用补人 */
+  var quitBak = 0;
+  abs.forEach(function(a){
+    if(a.role === '备选' && atAll[a.id] !== 'yes' && !promoted[a.id]) quitBak++;
+  });
+
+  var gis = Object.keys(needBy).map(Number).sort(function(a,b){ return a-b; });
+  if(!gis.length){
+    return {err:'当前无需补抽：项目参会人数已满足需求（需求 '+st2.need
+               +' 人，已确认 / 待定 '+st2.avail+' 人'
+               +(st2.bakAvail ? '，另有 '+st2.bakAvail+' 位备选可继续联系' : '')+'）。'
+               +(quitBak ? '\n\n你勾选的 '+quitBak+' 位备选属于「退出」，'
+                         + '他们不占名额，退出不影响参会人数，无需补人。' : '')};
+  }
+
+  var groups = [];
+  gis.forEach(function(gi){
+    var g = (r.groups||[])[gi];
+    if(!g) return;
+    var need = needBy[gi], fromBak = [];
+    (g.backup||[]).forEach(function(e){
+      if(fromBak.length >= need) return;
+      if(absentIds[e.id] || everAbsent[e.id] || taken[e.id]) return;
+      fromBak.push(snap(e)); taken[e.id] = 1;
+    });
+    groups.push({ gi:gi, room:groupRoom(r,g), major:g.major, altMajor:g.altMajor||'',
+                  place:groupPlace(r,g), need:need, fromBak:fromBak, fromPool:[], shortfall:0 });
+  });
+
+  var poolInfo = null;
+  var anyRest = groups.some(function(x){ return x.need - x.fromBak.length > 0; });
+  if(mode === '1' && anyRest){
+    var majors = [];
+    groups.forEach(function(x){
+      if(x.need - x.fromBak.length > 0){
+        majors.push(x.major);
+        if(x.altMajor) majors.push(x.altMajor);
+      }
+    });
+    poolInfo = redrawPool(pc, extra, majors);
+    /* 同单位上限：先把在任人员计入 */
+    var orgCount = {};
+    experts().forEach(function(e){
+      if(taken[e.id] && !absentIds[e.id] && e.org) orgCount[e.org] = (orgCount[e.org]||0) + 1;
+    });
+    groups.forEach(function(x){
+      var rest = x.need - x.fromBak.length;
+      if(rest <= 0) return;
+      var sub = poolInfo.pool.filter(function(p){
+        if(backupIds[p.e.id]) return false;
+        return p.major === x.major || (x.altMajor && p.major === x.altMajor);
+      });
+      var got = pickFor(sub, {sameOrg: pc.sameOrg}, taken, orgCount).slice(0, rest);
+      got.forEach(function(p){ taken[p.e.id] = 1; x.fromPool.push(snap(p.e)); });
+      x.shortfall = rest - got.length;
+    });
+  } else {
+    groups.forEach(function(x){ x.shortfall = x.need - x.fromBak.length; });
+  }
+  return {parent:r, abs:abs, groups:groups, pool:poolInfo, mode:mode, cond:pc,
+          quitBak:quitBak, promoted:promoted, atAll:atAll, stat:st2};
+}
+
+function previewRedraw(){
+  var p = planRedraw();
+  var box = document.getElementById('rdMsg');
+  if(p.err){ box.innerHTML = '<div class="notice w">'+esc(p.err)+'</div>'; return; }
+  var h = '<div class="notice i">';
+  p.groups.forEach(function(x){
+    var nm = (x.room ? x.room+' / ' : '') + x.major;
+    var tot = x.fromBak.length + x.fromPool.length;
+    h += (x.shortfall>0?'⚠ ':'') + esc(nm) + '：需补 '+x.need+' 人 → 备选递补 '+x.fromBak.length+' 人'
+       + (p.mode==='1' ? ' / 专家库重抽 '+x.fromPool.length+' 人' : '')
+       + (x.shortfall>0 ? '，缺额 '+x.shortfall+' 人' : '，共 '+tot+' 人') + '<br>';
+    x.fromBak.forEach(function(e){ h += '&nbsp;&nbsp;· 递补 '+esc(e.name)+'（'+esc(e.org||'')+'）<br>'; });
+    x.fromPool.forEach(function(e){ h += '&nbsp;&nbsp;· 重抽 '+esc(e.name)+'（'+esc(e.org||'')+'）<br>'; });
+  });
+  if(p.pool) h += '<br>补抽候选池 '+p.pool.pool.length+' 人，已排除 '+p.pool.excluded.length+' 人。';
+  else if(p.mode!=='1') h += '<br>当前为「仅从备选递补」，未启用专家库重抽。';
+  if(p.quitBak) h += '<br>另有 '+p.quitBak+' 位备选退出：他们没占过名额，退出不计入补抽人数，'
+                   + '只是不再作为递补来源。';
+  if(p.stat && p.stat.bakAvail){
+    h += '<br>尚有 <b>'+p.stat.bakAvail+'</b> 位备选未表态，已优先列入递补；'
+       + '若他们其实已确定不能参加，请先回「抽取结果」把他们标记为「不参加」，'
+       + '本次补抽才会改从专家库重新抽取。';
+  }
+  if(p.stat && p.stat.need){
+    h += '<br>项目需求 '+p.stat.need+' 人，现有（含已递补上位的备选）'+p.stat.avail+' 人'
+       + (p.stat.bakAvail ? '，另有 '+p.stat.bakAvail+' 位备选待联系' : '')
+       + '，故本次补 '+p.groups.reduce(function(s,x){ return s + x.need; }, 0)+' 人。';
+  }
+  h += '</div>';
+  box.innerHTML = h;
+  var info = document.getElementById('rdInfo');
+  if(info && p.pool){
+    var ids = p.pool.pool.map(function(x){ return x.e.id; });
+    info.textContent = '候选池 '+ids.length+' 人 · 快照哈希 '+hashStr(ids.join('|'));
+  }
+}
+
+function runRedraw(){
+  var p = planRedraw();
+  if(p.err){ alert(p.err); return; }
+  var user = tv('rdUser');
+  if(!user){ alert('请填写补抽人姓名。'); return; }
+  var noReason = p.abs.filter(function(a){ return !a.reason; });
+  if(noReason.length && !confirm('有 '+noReason.length+' 位缺席专家未填写缺席原因，仍继续补抽吗？')) return;
+
+  var r = p.parent;
+  var incoming = [], allPicks = [], shortfall = [];
+  p.groups.forEach(function(x){
+    var absInG = p.abs.filter(function(a){ return a.gi === x.gi; });
+    var list = [];
+    x.fromBak.forEach(function(e){ list.push({e:e, source:'备选递补'}); });
+    x.fromPool.forEach(function(e){ list.push({e:e, source:'专家库重抽'}); });
+    list.forEach(function(it, k){
+      var rep = absInG[k];
+      incoming.push({ group:x.gi, room:x.room, major:x.major, place:x.place,
+                      source:it.source, replaces: rep ? (rep.name+'（'+rep.role+'）') : '', expert:it.e });
+      allPicks.push({role:'补抽', id:it.e.id, name:it.e.name, org:it.e.org,
+                     major:x.major, room:x.room, source:it.source});
+    });
+    if(x.shortfall > 0){
+      shortfall.push((x.room ? x.room+' / ' : '') + x.major + '：需补 '+x.need+' 人，实补 '+list.length+' 人');
+    }
+  });
+
+  var poolIds = p.pool ? p.pool.pool.map(function(x){ return x.e.id; }) : [];
+  var rid = 'RD' + Date.now().toString(36).toUpperCase();
+  var rec = {
+    rid: rid,
+    at: nowStr(),
+    kind: 'redraw',
+    parent: r.rid,
+    project: r.project, code: r.code, operator: user,
+    proj: r.proj, draw: r.draw,
+    redraw: { user:user, sup:tv('rdSup'), mode:p.mode,
+              extra: !!document.getElementById('rdExtra').checked },
+    cond: p.cond,
+    /* quit=true 的是备选退出：他从没占过名额，只是不再作为递补来源，与缺席分开显示。
+       确认参加过、或被历次补抽递补上位过的备选，走的是「缺席」——他空出了名额要补人。 */
+    absentees: p.abs.map(function(a){
+      return { id:a.id, name:a.name, role:a.role,
+               quit: (a.role === '备选' && (p.atAll||{})[a.id] !== 'yes'
+                      && !(p.promoted||{})[a.id]),
+               group: ((r.groups||[])[a.gi]||{}).major || '',
+               reason: a.reason || '未填写' };
+    }),
+    groups: p.groups.map(function(x){
+      return { gi:x.gi, room:x.room, major:x.major, place:x.place, need:x.need,
+               fromBak:x.fromBak, fromPool:x.fromPool, shortfall:x.shortfall };
+    }),
+    incoming: incoming,
+    picks: allPicks,
+    poolSize: poolIds.length,
+    poolHash: hashStr(poolIds.join('|')),
+    excluded: p.pool ? p.pool.excluded : [],
+    shortfall: shortfall,
+    randomSource: 'Web Crypto API (crypto.getRandomValues) · Fisher-Yates · 无偏取模'
+  };
+
+  var all = records();
+  all.unshift(rec);
+  for(var i=0;i<all.length;i++){
+    if(all[i].rid === r.rid){
+      all[i].absent = (all[i].absent||[]).concat(p.abs.map(function(a){
+        return { id:a.id, name:a.name, role:a.role,
+                 group: ((r.groups||[])[a.gi]||{}).major || '',
+                 reason: a.reason || '未填写', at: rec.at, by: rid };
+      }));
+      all[i].redraws = (all[i].redraws||[]).concat([rid]);
+      break;
+    }
+  }
+  setRecords(all);
+
+  renderRedrawResult(rec);
+  renderRedrawRecords();
+  renderRecords();
+  refreshRedrawSrc();
+  loadRedrawSrc(true);      /* 保留刚渲染的补抽结果，只刷新下面的缺席名单 */
+  /* 补抽结果要滚动到可见处——否则用户在页面下方执行补抽，看起来像什么都没发生 */
+  var rb = document.getElementById('rdResult');
+  if(rb && rb.scrollIntoView) rb.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function renderRedrawResult(rec, keepScroll){
+  var h = '';
+  if(rec.shortfall && rec.shortfall.length){
+    h += '<div class="notice w"><strong>补抽人数不足</strong><br>'+rec.shortfall.map(esc).join('<br>')+'</div>';
+  }
+  h += '<div class="card"><div class="card-hd"><h3>补抽结果</h3><div style="flex:1"></div>'
+     + '<button class="btn sm" onclick="printRd(\''+rec.rid+'\')">打印 / 存为 PDF</button>'
+     + '<button class="btn sm" onclick="exportRd(\''+rec.rid+'\')">导出 CSV</button></div>'
+     + '<div class="hint">'+esc(ORG_NAME)+' · 补抽编号 '+esc(rec.rid)+' · 补抽时间 '+esc(rec.at)+' · 原记录 '+esc(rec.parent)+'</div>'
+     + infoTable(rec)
+     + rdAttSummaryHTML(rec);
+
+  /* 缺席（占名额，必须补人）与备选退出（不占名额，只是不再递补）分开列，
+     混在一起会让人以为退出的人也要补，人数对不上。 */
+  var pr = rec.parent ? promotedIds(rec.parent) : {};
+  var isQuit = function(a){
+    return a.quit === true || (a.quit === undefined && a.role === '备选' && !pr[a.id]);
+  };
+  var abList = rec.absentees.filter(function(a){ return !isQuit(a); });
+  var qtList = rec.absentees.filter(isQuit);
+
+  h += '<div style="font-size:13px;font-weight:500;margin:14px 0 5px">一、缺席专家（'+abList.length+' 人）'
+     + '<span style="font-weight:400;color:var(--text3);font-size:12px;margin-left:8px">'
+     + '以下人员占需求名额，其位置由下方递补人员顶替</span></div>'
+     + '<table><thead><tr><th style="width:44px">序</th><th style="width:70px">角色</th><th style="width:96px">姓名</th>'
+     + '<th style="width:130px">专业组</th><th>缺席原因</th></tr></thead><tbody>';
+  if(!abList.length){
+    h += '<tr><td colspan="5" style="color:var(--text3)">无人缺席</td></tr>';
+  }
+  abList.forEach(function(a,i){
+    h += '<tr><td>'+(i+1)+'</td><td>'+esc(a.role)+'</td><td>'+esc(a.name)+'</td>'
+       + '<td style="color:var(--text3)">'+esc(a.group||'-')+'</td>'
+       + '<td style="color:var(--red)">'+esc(a.reason)+'</td></tr>';
+  });
+  h += '</tbody></table>';
+
+  if(qtList.length){
+    h += '<div style="font-size:13px;font-weight:500;margin:16px 0 5px">备选退出（'+qtList.length+' 人）'
+       + '<span style="font-weight:400;color:var(--text3);font-size:12px;margin-left:8px">'
+       + '备选不占需求名额，退出无需补抽，仅不再作为递补来源</span></div>'
+       + '<table><thead><tr><th style="width:44px">序</th><th style="width:70px">角色</th><th style="width:96px">姓名</th>'
+       + '<th style="width:130px">专业组</th><th>退出原因</th></tr></thead><tbody>';
+    qtList.forEach(function(a,i){
+      h += '<tr style="color:var(--text3)"><td>'+(i+1)+'</td><td>备选</td><td>'+esc(a.name)+'</td>'
+         + '<td style="color:var(--text3)">'+esc(a.group||'-')+'</td>'
+         + '<td>'+esc(a.reason)+'</td></tr>';
+    });
+    h += '</tbody></table>';
+  }
+
+  /* 补抽出来的人要跟正抽取一样，一个一个打电话确认，直到凑够需求人数。
+     人数已满足时，剩下没确认的不用再打了，弱显出来。 */
+  var cap = recAttStat(capRecOf(rec));
+  var full = !!(cap.need > 0 && cap.yes >= cap.need);
+  h += '<div style="font-size:13px;font-weight:500;margin:18px 0 5px">二、递补 / 重抽专家（'+rec.incoming.length+' 人）'
+     + '<span style="font-weight:400;color:var(--text3);font-size:12px;margin-left:8px">'
+     + '请按手机号逐一电话确认是否参加</span></div>';
+  if(full){
+    h += '<div style="padding:5px 12px;font-size:12px;color:var(--text3);background:var(--bg2);border-radius:6px">'
+       + '参会人数已满足需求（'+cap.yes+' / '+cap.need+'），以下未确认人员无需再联系</div>';
+  }
+  h += '<table><thead><tr><th style="width:44px">序</th><th style="width:100px">来源</th><th style="width:96px">姓名</th>'
+     + '<th>单位</th><th style="width:80px">职称</th><th style="width:120px">手机号</th>'
+     + '<th style="width:130px">替换对象</th><th style="width:158px">参会确认</th><th style="width:130px">备注</th></tr></thead><tbody>';
+  if(!rec.incoming.length){
+    h += '<tr><td colspan="9" style="color:var(--text3)">本次补抽未产生递补人员（备选不足，且未启用专家库重抽）。</td></tr>';
+  }
+  rec.incoming.forEach(function(x,i){
+    var e = x.expert, v = attVal(rec, e.id);
+    var dim = full && v !== 'yes' && v !== 'no';
+    h += '<tr class="'+((v==='no'||dim)?'dim':'')+'"><td>'+(i+1)+'</td>'
+       + '<td><span class="src-tag '+(x.source==='备选递补'?'g':'b')+'">'+esc(x.source)+'</span></td>'
+       + '<td>'+esc(e.name)+'</td><td>'+esc(e.org||'')+'</td><td>'+esc(e.title||'')+'</td>'
+       + '<td class="mono">'+esc(e.phone||'')+'</td>'
+       + '<td style="color:var(--text3)">'+esc(x.replaces||'-')+'</td>'
+       + '<td>'+(dim ? '<span style="font-size:11px;color:var(--text3);margin-right:4px">无需联系</span>' : '')
+       + attBtns(rec.rid, e.id, v)+'</td>'
+       + '<td style="color:var(--text2)">'+(v==='no' ? esc(attNote(rec, e.id)) : '')+'</td></tr>';
+  });
+  h += '</tbody></table>';
+
+  h += '<details style="margin-top:12px"><summary>查看留痕信息（补抽候选池 / 排除明细 / 随机源）</summary>'
+     + '<div style="padding:10px 0"><dl class="kv">'
+     + '<dt>补抽方式</dt><dd>'+(rec.redraw.mode==='1'?'优先备选递补，不足时从专家库重抽':'仅从备选递补')+'</dd>'
+     + '<dt>追加回避</dt><dd>'+(rec.redraw.extra?'已追加「专家抽取」页当前回避信息':'否')+'</dd>'
+     + '<dt>补抽候选池</dt><dd>'+rec.poolSize+' 人 · 快照哈希 <span class="mono">'+esc(rec.poolHash)+'</span></dd>'
+     + '<dt>随机源</dt><dd>'+esc(rec.randomSource)+'</dd>'
+     + '<dt>补抽人</dt><dd>'+esc(rec.redraw.user)+(rec.redraw.sup?' · 监督人 '+esc(rec.redraw.sup):'')+'</dd>'
+     + '</dl>';
+  if(rec.excluded && rec.excluded.length){
+    h += '<div style="margin-top:10px;font-size:12px;color:var(--text3)">被排除 '+rec.excluded.length+' 人：</div>'
+       + '<div style="max-height:180px;overflow:auto;margin-top:4px"><table><tbody>';
+    rec.excluded.forEach(function(x){
+      h += '<tr><td style="width:80px">'+esc(x.name)+'</td><td style="width:150px;color:var(--text3)">'+esc(x.org||'')+'</td>'
+         + '<td style="color:var(--red)">'+esc(x.reasons.join('；'))+'</td></tr>';
+    });
+    h += '</tbody></table></div>';
+  }
+  h += '</div></details></div>';
+
+  var box = document.getElementById('rdResult');
+  box.innerHTML = h;
+  if(!keepScroll) box.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function renderRedrawRecords(){
+  var rs = records().filter(function(r){ return r.kind === 'redraw'; });
+  var box = document.getElementById('rdRecTable');
+  if(!box) return;
+  if(!rs.length){ box.innerHTML = '<div class="empty">还没有补抽记录。</div>'; return; }
+  var h = '<table><thead><tr><th style="width:150px">补抽时间</th><th>项目</th><th style="width:90px">补抽人</th>'
+        + '<th style="width:80px">缺席</th><th style="width:80px">递补</th><th style="width:86px">已确认</th><th style="width:188px">操作</th></tr></thead><tbody>';
+  rs.forEach(function(r){
+    var pp = rp(r);
+    h += '<tr><td class="num">'+esc(r.at)+'</td>'
+      + '<td><strong>'+esc(pp.name||'-')+'</strong>'+(pp.code?' <span style="color:var(--text3)">· '+esc(pp.code)+'</span>':'')
+        + '<div style="color:var(--text3);font-size:12px">原记录 '+esc(r.parent)+'</div>'
+        + (r.shortfall&&r.shortfall.length?' <span class="tag a">人数不足</span>':'')+'</td>'
+      + '<td>'+esc((r.redraw&&r.redraw.user)||'-')+'</td>'
+      + '<td class="num">'+((r.absentees||[]).length)+' 人</td>'
+      + '<td class="num">'+((r.incoming||[]).length)+' 人</td>'
+      + '<td class="num">'+attStat(r, (r.incoming||[]).map(function(x){ return x.expert; })).yes+' 人</td>'
+      + '<td><button class="btn sm" onclick="viewRd(\''+r.rid+'\')">详情</button> '
+      + '<button class="btn sm" onclick="exportRd(\''+r.rid+'\')">导出</button> '
+      + '<button class="btn sm dgr" onclick="delRd(\''+r.rid+'\')">删除</button></td></tr>';
+  });
+  box.innerHTML = h + '</tbody></table>';
+}
+
+function viewRd(rid){
+  var r = findRec(rid); if(!r) return;
+  var p = findRec(r.parent);
+  var h = '<h3>补抽记录详情</h3>' + infoTable(r) + rdAttSummaryHTML(r)
+    + '<dl class="kv" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)">'
+    + '<dt>补抽编号</dt><dd class="mono">'+esc(r.rid)+'</dd>'
+    + '<dt>补抽时间</dt><dd>'+esc(r.at)+'</dd>'
+    + '<dt>原记录编号</dt><dd class="mono">'+esc(r.parent)+'</dd>'
+    + '<dt>补抽人</dt><dd>'+esc((r.redraw&&r.redraw.user)||'-')
+      +((r.redraw&&r.redraw.sup)?' · 监督人 '+esc(r.redraw.sup):'')+'</dd>'
+    + '<dt>补抽方式</dt><dd>'+((r.redraw&&r.redraw.mode)==='1'?'优先备选递补，不足时从专家库重抽':'仅从备选递补')+'</dd>'
+    + '<dt>补抽候选池</dt><dd>'+r.poolSize+' 人 · 快照哈希 <span class="mono">'+esc(r.poolHash)+'</span></dd>'
+    + '<dt>随机源</dt><dd>'+esc(r.randomSource)+'</dd>'
+    + '</dl>';
+
+  h += '<div style="font-size:13px;font-weight:500;margin:14px 0 5px">缺席专家（'+r.absentees.length+' 人）</div>'
+     + '<table><thead><tr><th style="width:70px">角色</th><th style="width:96px">姓名</th><th style="width:120px">专业组</th><th>缺席原因</th></tr></thead><tbody>';
+  r.absentees.forEach(function(a){
+    h += '<tr><td>'+esc(a.role)+'</td><td>'+esc(a.name)+'</td>'
+       + '<td style="color:var(--text3)">'+esc(a.group||'-')+'</td>'
+       + '<td style="color:var(--red)">'+esc(a.reason)+'</td></tr>';
+  });
+  h += '</tbody></table>';
+
+  /* 回看补抽记录时也得能接着打电话确认，所以这里给完整手机号和参会按钮（不脱敏） */
+  h += '<div style="font-size:13px;font-weight:500;margin:16px 0 5px">递补 / 重抽专家（'+r.incoming.length+' 人）</div>'
+     + '<table><thead><tr><th style="width:100px">来源</th><th style="width:96px">姓名</th><th>单位</th>'
+     + '<th style="width:80px">职称</th><th style="width:110px">手机号</th><th style="width:140px">替换对象</th>'
+     + '<th style="width:150px">参会确认</th><th style="width:130px">备注</th></tr></thead><tbody>';
+  if(!r.incoming.length) h += '<tr><td colspan="8" style="color:var(--text3)">无递补人员</td></tr>';
+  r.incoming.forEach(function(x){
+    var e = x.expert, v = attVal(r, e.id);
+    h += '<tr'+(v==='no'?' class="dim"':'')+'><td><span class="src-tag '+(x.source==='备选递补'?'g':'b')+'">'+esc(x.source)+'</span></td>'
+       + '<td>'+esc(e.name)+'</td><td>'+esc(e.org||'')+'</td><td>'+esc(e.title||'')+'</td>'
+       + '<td class="mono">'+esc(e.phone||'')+'</td><td style="color:var(--text3)">'+esc(x.replaces||'-')+'</td>'
+       + '<td>'+attBtns(r.rid, e.id, v)+'</td>'
+       + '<td style="color:var(--text2)">'+(v==='no' ? esc(attNote(r, e.id)) : '')+'</td></tr>';
+  });
+  h += '</tbody></table>';
+
+  if(r.excluded && r.excluded.length){
+    h += '<details style="margin-top:12px"><summary>排除明细（'+r.excluded.length+' 人）</summary>'
+       + '<div style="max-height:220px;overflow:auto;margin-top:6px"><table><tbody>';
+    r.excluded.forEach(function(x){
+      h += '<tr><td style="width:80px">'+esc(x.name)+'</td><td style="width:140px;color:var(--text3)">'+esc(x.org||'')+'</td>'
+         + '<td style="color:var(--red)">'+esc(x.reasons.join('；'))+'</td></tr>';
+    });
+    h += '</tbody></table></div></details>';
+  }
+
+  h += '<div class="modal-ft">'
+     + (p ? '<button class="btn" onclick="closeM(\'mRd\');viewRec(\''+p.rid+'\')">查看原记录</button>' : '')
+     + '<button class="btn" onclick="printRd(\''+r.rid+'\')">打印 / 存为 PDF</button>'
+     + '<button class="btn" onclick="exportRd(\''+r.rid+'\')">导出 CSV</button>'
+     + '<button class="btn" onclick="closeM(\'mRd\')">关闭</button></div>';
+  document.getElementById('mRdBody').innerHTML = h;
+  document.getElementById('mRd').classList.add('on');
+}
+
+function delRd(rid){
+  if(!confirm('删除该补抽记录？原记录中由本次补抽登记的缺席信息将一并撤销，操作不可撤销。')) return;
+  var all = records();
+  var r = all.filter(function(x){ return x.rid === rid; })[0];
+  var out = [];
+  all.forEach(function(x){
+    if(x.rid === rid) return;
+    if(r && x.rid === r.parent){
+      x.redraws = (x.redraws||[]).filter(function(v){ return v !== rid; });
+      x.absent  = (x.absent||[]).filter(function(a){ return a.by !== rid; });
+    }
+    out.push(x);
+  });
+  setRecords(out);
+  renderRedrawRecords();
+  renderRecords();
+  refreshRedrawSrc();
+  loadRedrawSrcIfEmpty();
+}
+
+function exportRd(rid){
+  var r = findRec(rid); if(!r) return;
+  var rows = [];
+  rows.push(['评标专家补抽记录']);
+  rows.push(['补抽编号', r.rid]);
+  rows.push(['补抽时间', r.at]);
+  rows.push(['原抽取记录编号', r.parent]);
+  projRows(r).forEach(function(x){ rows.push(x); });
+  rows.push(['补抽人', (r.redraw&&r.redraw.user)||'']);
+  if(r.redraw && r.redraw.sup) rows.push(['补抽监督人', r.redraw.sup]);
+  rows.push(['补抽方式', (r.redraw&&r.redraw.mode)==='1' ? '优先备选递补，不足时从专家库重抽' : '仅从备选递补']);
+  rows.push(['追加使用当前回避信息', (r.redraw&&r.redraw.extra) ? '是' : '否']);
+  rows.push(['补抽候选池人数', r.poolSize]);
+  rows.push(['候选池快照哈希', r.poolHash]);
+  rows.push(['随机源', r.randomSource]);
+  rows.push([]);
+  rows.push(['一、缺席专家']);
+  rows.push(['序号','角色','姓名','专业组','缺席原因']);
+  (r.absentees||[]).forEach(function(a,i){ rows.push([i+1,a.role,a.name,a.group||'',a.reason]); });
+  rows.push([]);
+  rows.push(['二、递补 / 重抽专家']);
+  rows.push(['序号','来源','评标室','评标专业','专家编号','姓名','单位','职称','手机号','替换对象','参会确认']);
+  (r.incoming||[]).forEach(function(x,i){
+    var e = x.expert;
+    rows.push([i+1,x.source,x.room||'',x.major,e.id,e.name,e.org||'',e.title||'',e.phone||'',x.replaces||'',
+               attText(attVal(r, e.id))]);
+  });
+  if(r.excluded && r.excluded.length){
+    rows.push([]);
+    rows.push(['排除明细']);
+    rows.push(['姓名','单位','排除原因']);
+    r.excluded.forEach(function(x){ rows.push([x.name, x.org||'', x.reasons.join('；')]); });
+  }
+  download('补抽记录_'+esc(rp(r).name).slice(0,20)+'_'+r.at.slice(0,10)+'.csv', toCSV(rows), 'text/csv;charset=utf-8');
+}
+
+function printRd(rid){
+  var r = findRec(rid); if(!r) return;
+  var pr = projRows(r);
+  var info = '';
+  for(var pi=0; pi<pr.length; pi+=2){
+    info += '<tr><th style="width:100px">'+esc(pr[pi][0])+'</th><td>'+esc(pr[pi][1])+'</td>';
+    if(pr[pi+1]) info += '<th style="width:100px">'+esc(pr[pi+1][0])+'</th><td>'+esc(pr[pi+1][1])+'</td>';
+    else info += '<th></th><td></td>';
+    info += '</tr>';
+  }
+  var h = '<div style="font-size:13px;font-weight:600;margin-bottom:2px">'+esc(ORG_NAME)+'</div>'
+    + '<h2>评标专家补抽记录</h2>'
+    + '<div style="color:#555;font-size:11px;margin-bottom:12px">补抽编号 '+esc(r.rid)+' · 补抽时间 '+esc(r.at)
+    + ' · 原记录编号 '+esc(r.parent)+'</div>';
+  h += '<div class="sec"><table><tbody>' + info
+    + '<tr><th>补抽人</th><td>'+esc((r.redraw&&r.redraw.user)||'-')
+      +((r.redraw&&r.redraw.sup)?' / 监督人 '+esc(r.redraw.sup):'')+'</td>'
+    + '<th>补抽方式</th><td>'+((r.redraw&&r.redraw.mode)==='1'?'优先备选递补，不足时从专家库重抽':'仅从备选递补')+'</td></tr>'
+    + '<tr><th>补抽候选池</th><td>'+r.poolSize+' 人，快照哈希 <span class="mono">'+esc(r.poolHash)+'</span></td>'
+    + '<th>随机方式</th><td>'+esc(r.randomSource)+'</td></tr>'
+    + '</tbody></table></div>';
+
+  h += '<div class="sec"><div style="font-weight:600;margin-bottom:4px">一、缺席专家（'+r.absentees.length+' 人）</div>'
+     + '<table><thead><tr><th style="width:60px">角色</th><th style="width:80px">姓名</th><th style="width:110px">专业组</th><th>缺席原因</th></tr></thead><tbody>';
+  r.absentees.forEach(function(a){
+    h += '<tr><td>'+esc(a.role)+'</td><td>'+esc(a.name)+'</td><td>'+esc(a.group||'')+'</td><td>'+esc(a.reason)+'</td></tr>';
+  });
+  h += '</tbody></table></div>';
+
+  h += '<div class="sec"><div style="font-weight:600;margin-bottom:4px">二、递补 / 重抽专家（'+r.incoming.length+' 人）</div>'
+     + '<table><thead><tr><th style="width:44px">序号</th><th style="width:90px">来源</th><th style="width:80px">姓名</th>'
+     + '<th>单位</th><th style="width:70px">职称</th><th style="width:110px">联系方式</th><th style="width:130px">替换对象</th></tr></thead><tbody>';
+  r.incoming.forEach(function(x,i){
+    var e = x.expert;
+    h += '<tr><td>'+(i+1)+'</td><td>'+esc(x.source)+'</td><td>'+esc(e.name)+'</td><td>'+esc(e.org||'')+'</td>'
+       + '<td>'+esc(e.title||'')+'</td><td>'+esc(e.phone||'')+'</td><td>'+esc(x.replaces||'')+'</td></tr>';
+  });
+  h += '</tbody></table></div>';
+
+  if(r.excluded && r.excluded.length){
+    h += '<div class="sec"><div style="font-weight:600;margin-bottom:4px">排除明细（'+r.excluded.length+' 人）</div>'
+       + '<table><thead><tr><th style="width:70px">姓名</th><th style="width:160px">单位</th><th>排除原因</th></tr></thead><tbody>';
+    r.excluded.forEach(function(x){ h += '<tr><td>'+esc(x.name)+'</td><td>'+esc(x.org||'')+'</td><td>'+esc(x.reasons.join('；'))+'</td></tr>'; });
+    h += '</tbody></table></div>';
+  }
+  h += '<div style="margin-top:20px;font-size:11px;color:#666">补抽人签字：____________　　监督人签字：____________　　日期：____________</div>';
+
+  document.getElementById('printArea').innerHTML = h;
+  window.print();
+}
+
+/* ================= 示例数据 ================= */
+function loadDemo(){
+  if(experts().length && !confirm('载入示例数据会追加到现有专家库，确认继续？')) return;
+  var demo = [
+    /* 姓名, 身份证号, 所在单位, 职称, 执业资格, 一级专业, 二级专业, 所在地, 手机号, 邮箱, 入库日期, 状态 */
+    ['张启明','110101196201010016','华远建设集团','正高级','注册造价工程师','工程技术','建筑工程','北京','13801010001','','2024-03-01','在库'],
+    ['李文君','120103196708120024','中鼎工程咨询','副高级','注册监理工程师','工程技术','市政工程','北京','13801010002','','2024-03-01','在库'],
+    ['王思远','440301197203230030','北方科技大学','正高级','','工程技术','结构工程','天津','13801010003','','2024-05-12','在库'],
+    ['赵敏','310101197710070043','恒信会计师事务所','副高级','注册会计师','经济管理','财务审计','北京','13801010004','','2024-05-12','在库'],
+    ['陈立新','510107198205180057','东方电子科技','正高级','','信息技术','软件工程','深圳','13801010005','','2024-06-20','在库'],
+    ['刘雅琴','440103198712020062','南方规划设计院','正高级','注册城乡规划师','工程技术','城乡规划','广州','13801010006','','2024-06-20','在库'],
+    ['孙浩然','420111199207130077','中远机电设备','副高级','','工程技术','机电工程','上海','13801010007','','2024-08-15','在库'],
+    ['周慧','320106196202240084','明德律师事务所','正高级','法律职业资格','法律','合同法','北京','13801010008','','2024-08-15','在库'],
+    ['吴国栋','110101196709080090','西部交通建设','正高级','注册土木工程师','工程技术','公路工程','成都','13801010009','','2024-09-01','在库'],
+    ['郑晓彤','120103197204190103','海通工程管理','中级','','经济管理','工程造价','上海','13801010010','','2024-09-01','在库'],
+    ['冯志强','440301197711030115','清华同方信息','副高级','','信息技术','网络安全','北京','13801010011','','2024-10-10','在库'],
+    ['何淑芬','310101198206140123','南方规划设计院','副高级','','工程技术','市政工程','广州','13801010012','','2024-10-10','暂停'],
+    ['马建军','510107198701250130','中鼎工程咨询','正高级','','工程技术','建筑工程','北京','13801010013','','2024-11-05','在库'],
+    ['林清','440103199208090146','北方科技大学','副高级','','经济管理','项目管理','天津','13801010014','','2024-11-05','在库']
+  ];
+  var all = experts(), seq = all.length;
+  demo.forEach(function(d){
+    seq++;
+    all.push({
+      id:'EX'+String(seq).padStart(4,'0'), name:d[0], idNo:d[1], org:d[2], title:d[3],
+      cert:d[4], major1:d[5], major2:d[6], city:d[7], phone:d[8], email:d[9],
+      joinDate:d[10], status:d[11], remark:''
+    });
+  });
+  setExperts(all);
+  renderExperts(); refreshDatalist();
+  alert('已载入 '+demo.length+' 条示例专家，可直接在「专家抽取」页试用。');
+}
+
+/* ================= 初始化 ================= */
+(function init(){
+  showStoreWarn();
+  /* 页头公司名 + 抽取界面「所属机构」默认值 */
+  var hdOrg = document.getElementById('hdOrg'); if(hdOrg) hdOrg.textContent = ORG_NAME;
+  var dOrg  = document.getElementById('dOrg');  if(dOrg && !dOrg.value) dOrg.value = ORG_NAME;
+  initRegions();
+  initTimeSelect('dStartT');
+  initTimeSelect('dCheckinT');
+  initDuration();
+  addRow('compose');
+  /* 恢复上次填写。必须放在 addRow('compose') 之后：
+     loadForm 会清空四张表再按存档重建，放前面会被随后补的那行默认空行挤多一行。 */
+  var restoredAt = null;
+  try {
+    var __f = JSON.parse(localStorage.getItem('extdraw.form.v1') || 'null');
+    if(__f) restoredAt = __f.at;
+  } catch(e){}
+  loadForm();
+  seedHist();   /* 从已有抽取记录里回填每个输入框的历史候选值 */
+  var fTip = document.getElementById('formTip');
+  if(fTip && restoredAt){
+    fTip.innerHTML = '已恢复 ' + esc(restoredAt) + ' 填写的内容';
+  }
+  if(!restoredAt) calcCommittee('total');   /* 有存档时 loadForm 里已复核过联动calc */
+  syncChecks();
+  /* 表单填写记忆：任何输入 / 选择都延迟落盘（300ms 防抖） */
+  document.addEventListener('input', queueSaveForm, true);
+  document.addEventListener('change', queueSaveForm, true);
+  /* 输入联想：聚焦 / 点击输入框就弹历史值；离开或改动先在 searchKey 里处理 */
+  document.addEventListener('focusin', function(ev){ openSug(ev.target); }, true);
+  document.addEventListener('click', function(ev){
+    if(ev.target && String(ev.target.tagName) === 'INPUT') openSug(ev.target);
+  }, true);
+  document.addEventListener('input', function(ev){
+    var el = ev.target;
+    if(el && String(el.tagName) === 'INPUT' && SUG_TARGET === el){
+      SUG_SEL = -1;
+      if(!renderSug(el)) closeSug();
+    }
+  }, true);
+  document.addEventListener('keydown', function(ev){
+    var el = ev.target;
+    if(el && String(el.tagName) === 'INPUT' && SUG_TARGET === el){
+      if(sugKey(el, ev)) ev.preventDefault();
+    }
+  }, true);
+  document.addEventListener('focusout', function(){ setTimeout(closeSug, 120); }, true);
+  /* 值离开这个框时才记历史：正在打字的过程中不写，免得 "深" "深圳" "深圳市" 攒一堆 */
+  document.addEventListener('change', function(ev){
+    var el = ev.target;
+    if(el && String(el.tagName) === 'INPUT' && (el.type || 'text') === 'text') histPush(el);
+  }, true);
+  renderExperts();
+  refreshDatalist();
+  renderRecords();
+  refreshRedrawSrc();
+  renderRedrawRecords();
+  document.querySelectorAll('.mask').forEach(function(m){
+    m.addEventListener('click', function(ev){ if(ev.target===m) m.classList.remove('on'); });
+  });
+  document.addEventListener('keydown', function(ev){ if(ev.key==='Escape') document.querySelectorAll('.mask').forEach(function(m){ m.classList.remove('on'); }); });
+})();
+</script>
+</body>
+</html>
