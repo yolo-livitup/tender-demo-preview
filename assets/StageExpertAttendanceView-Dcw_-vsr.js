@@ -1,0 +1,1 @@
+import{_n as e,kn as t}from"./_plugin-vue_export-helper-BvP8t0ZP.js";import n from"./StageCommitteeView-BrOA9Tfy.js";var r={__name:`StageExpertAttendanceView`,setup(r){return(r,i)=>(t(),e(n,{focus:`attendance`}))}};export{r as default};
